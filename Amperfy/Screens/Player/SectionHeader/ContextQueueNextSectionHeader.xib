@@ -65,7 +65,7 @@
                         <imageReference key="image" image="infinity" catalog="system"/>
                     </buttonConfiguration>
                     <connections>
-                        <action selector="pressedAutoMix:" destination="iN0-l3-epB" eventType="touchUpInside" id="ayb-vj-n98"/>
+                        <action selector="pressedAutoplay:" destination="iN0-l3-epB" eventType="touchUpInside" id="ayb-vj-n98"/>
                     </connections>
                 </button>
             </subviews>
@@ -86,8 +86,8 @@
             </constraints>
             <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
             <connections>
-                <outlet property="autoMixButton" destination="1Fx-Rh-S7C" id="WBq-xu-NaB"/>
-                <outlet property="autoMixingTrailingConstraing" destination="INU-Hg-Bba" id="HHo-Q3-QYu"/>
+                <outlet property="autoplayButton" destination="1Fx-Rh-S7C" id="WBq-xu-NaB"/>
+                <outlet property="autoplayTrailingConstraint" destination="INU-Hg-Bba" id="HHo-Q3-QYu"/>
                 <outlet property="contextNameLabel" destination="j9L-PC-uFW" id="WEX-aP-zZa"/>
                 <outlet property="queueNameLabel" destination="wRZ-gF-AJQ" id="cJZ-ra-CEe"/>
                 <outlet property="repeatButton" destination="xI6-cK-gjl" id="Cx9-n5-Itg"/>

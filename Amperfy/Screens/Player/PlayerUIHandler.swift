@@ -85,8 +85,8 @@ class PlayerUIHandler: NSObject {
     player.setRepeatMode(player.repeatMode.nextMode)
   }
 
-  func autoMixButtonPushed() {
-    appDelegate.storage.settings.user.isAutoMixAfterEnd.toggle()
+  func autoplayButtonPushed() {
+    appDelegate.storage.settings.user.isAutoplayEnabled.toggle()
   }
 
   func refreshPlayButton(_ button: UIButton) {
@@ -232,23 +232,23 @@ class PlayerUIHandler: NSObject {
     shuffleButton.isSelected = player.isShuffle
   }
 
-  func refreshAutoMixButton(autoMixButton: UIButton) {
-    let isActive = appDelegate.storage.settings.user.isAutoMixAfterEnd
+  func refreshAutoplayButton(autoplayButton: UIButton) {
+    let isActive = appDelegate.storage.settings.user.isAutoplayEnabled
 
     switch style {
     case .miniPlayeriOS, .miniPlayerMac:
-      autoMixButton.configuration?.image = .infinity
+      autoplayButton.configuration?.image = .infinity
         .withConfiguration(UIImage.SymbolConfiguration(scale: .medium))
-      autoMixButton.tintColor = isActive ? .tintColor : .secondaryLabel
-      autoMixButton.backgroundColor = isActive ? .tintColor.withAlphaComponent(0.2) : .clear
+      autoplayButton.tintColor = isActive ? .tintColor : .secondaryLabel
+      autoplayButton.backgroundColor = isActive ? .tintColor.withAlphaComponent(0.2) : .clear
     case .popupPlayer:
       var config = UIButton.Configuration.player(isSelected: isActive)
       config.image = .infinity
         .withConfiguration(UIImage.SymbolConfiguration(scale: .medium))
-      autoMixButton.configuration = config
+      autoplayButton.configuration = config
     }
-    autoMixButton.isEnabled = player.playerMode == .music
-    autoMixButton.isSelected = isActive
+    autoplayButton.isEnabled = player.playerMode == .music
+    autoplayButton.isSelected = isActive
   }
 
   func refreshDisplayPlaylistButton(displayPlaylistButton: UIButton) {

@@ -115,8 +115,8 @@ struct PlayerSettingsView: View {
         SettingsSection(
           content: {
             SettingsCheckBoxRow(
-              title: "Instant Mix After End",
-              isOn: $settings.isAutoMixAfterEnd
+              title: "Autoplay After End",
+              isOn: $settings.isAutoplayEnabled
             )
           },
           footer: "When the queue ends, automatically continue playback using Instant Mix to find similar songs."

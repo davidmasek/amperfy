@@ -48,10 +48,10 @@ class ContextQueueNextSectionHeader: UIView {
   @IBOutlet
   weak var repeatButton: UIButton!
   @IBOutlet
-  weak var autoMixButton: UIButton!
+  weak var autoplayButton: UIButton!
 
   @IBOutlet
-  weak var autoMixingTrailingConstraing: NSLayoutConstraint!
+  weak var autoplayTrailingConstraint: NSLayoutConstraint!
 
   required init?(coder aDecoder: NSCoder) {
     super.init(coder: aDecoder)
@@ -70,34 +70,34 @@ class ContextQueueNextSectionHeader: UIView {
   func refresh() {
     contextNameLabel.text = "\(player.contextName)"
     refreshCurrentlyPlayingInfo()
-    configureAutoMixingButtonPosition()
+    configureAutoplayButtonPosition()
     playerHandler?.refreshRepeatButton(repeatButton: repeatButton)
     playerHandler?.refreshShuffleButton(shuffleButton: shuffleButton)
-    playerHandler?.refreshAutoMixButton(autoMixButton: autoMixButton)
+    playerHandler?.refreshAutoplayButton(autoplayButton: autoplayButton)
   }
 
-  func configureAutoMixingButtonPosition() {
-    autoMixingTrailingConstraing.isActive = false
+  func configureAutoplayButtonPosition() {
+    autoplayTrailingConstraint.isActive = false
     #if targetEnvironment(macCatalyst)
       if appDelegate.isShowingMiniPlayer {
-        autoMixingTrailingConstraing = autoMixButton.trailingAnchor.constraint(
+        autoplayTrailingConstraint = autoplayButton.trailingAnchor.constraint(
           equalTo: shuffleButton.leadingAnchor,
           constant: -8.0
         )
       } else {
-        autoMixingTrailingConstraing = autoMixButton.trailingAnchor.constraint(
+        autoplayTrailingConstraint = autoplayButton.trailingAnchor.constraint(
           equalTo: safeAreaLayoutGuide.trailingAnchor,
           constant: -8.0
         )
       }
     #else
-      autoMixingTrailingConstraing = autoMixButton.trailingAnchor.constraint(
+      autoplayTrailingConstraint = autoplayButton.trailingAnchor.constraint(
         equalTo: shuffleButton.leadingAnchor,
         constant: -8.0
       )
     #endif
     NSLayoutConstraint.activate([
-      autoMixingTrailingConstraing,
+      autoplayTrailingConstraint,
     ])
   }
 
@@ -106,11 +106,11 @@ class ContextQueueNextSectionHeader: UIView {
     case .music:
       repeatButton.isHidden = false
       shuffleButton.isHidden = false
-      autoMixButton.isHidden = false
+      autoplayButton.isHidden = false
     case .podcast:
       repeatButton.isHidden = true
       shuffleButton.isHidden = true
-      autoMixButton.isHidden = true
+      autoplayButton.isHidden = true
     }
   }
 
@@ -128,9 +128,9 @@ class ContextQueueNextSectionHeader: UIView {
   }
 
   @IBAction
-  func pressedAutoMix(_ sender: Any) {
-    playerHandler?.autoMixButtonPushed()
-    playerHandler?.refreshAutoMixButton(autoMixButton: autoMixButton)
+  func pressedAutoplay(_ sender: Any) {
+    playerHandler?.autoplayButtonPushed()
+    playerHandler?.refreshAutoplayButton(autoplayButton: autoplayButton)
   }
 }
 

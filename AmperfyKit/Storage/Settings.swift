@@ -171,10 +171,10 @@ public struct UserSettings: Sendable, Codable {
     set { _isPlayerSongPlaybackResumeEnabled = newValue }
   }
 
-  private var _isAutoMixAfterEnd: Bool = false
-  public var isAutoMixAfterEnd: Bool {
-    get { _isAutoMixAfterEnd }
-    set { _isAutoMixAfterEnd = newValue }
+  private var _isAutoplayEnabled: Bool = false
+  public var isAutoplayEnabled: Bool {
+    get { _isAutoplayEnabled }
+    set { _isAutoplayEnabled = newValue }
   }
 
   private var _isHapticsEnabled: Bool = true

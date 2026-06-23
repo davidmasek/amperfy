@@ -54,7 +54,7 @@ public class AudioPlayer: NSObject, BackendAudioPlayerNotifiable {
   }
 
   var isShouldPauseAfterFinishedPlaying = false
-  var autoMixCB: (@MainActor (Song) async throws -> [Song])?
+  var autoplayCB: (@MainActor (Song) async throws -> [Song])?
 
   private var playerStatus: PlayerStatusPersistent
   private var queueHandler: PlayQueueHandler
@@ -210,9 +210,9 @@ public class AudioPlayer: NSObject, BackendAudioPlayerNotifiable {
   func playNext() {
     if let nextPlayerIndex = nextPlayerIndex {
       play(playerIndex: nextPlayerIndex)
-    } else if settings.user.isAutoMixAfterEnd,
+    } else if settings.user.isAutoplayEnabled,
               let song = currentlyPlaying?.asSong,
-              let cb = autoMixCB,
+              let cb = autoplayCB,
               !backendAudioPlayer.isOfflineMode {
       Task { @MainActor [weak self] in
         guard let self else { return }

@@ -94,5 +94,5 @@ final class Settings: ObservableObject {
   var isMiniPlayerAlwaysOnTop = false
 
   @Published
-  var isAutoMixAfterEnd = false
+  var isAutoplayEnabled = false
 }
