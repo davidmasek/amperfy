@@ -331,15 +331,22 @@ final class SubsonicServerApi: URLCleanser, Sendable {
     let version = try await determineApiVersionToUse()
     // If transcoding is selected for caching the subsonic API method 'stream' must be used
     // For raw format subsonic API method 'download' can be used
+    let maxBitrate = settings.user.cacheMaxBitratePreference
     switch settings.user.cacheTranscodingFormatPreference {
     case .mp3:
       var urlComp = try createAuthApiUrlComponent(version: version, forAction: "stream", id: apiId)
       urlComp.addQueryItem(name: "format", value: "mp3")
+      if maxBitrate != .noLimit {
+        urlComp.addQueryItem(name: "maxBitRate", value: maxBitrate.rawValue)
+      }
       let url = try createUrl(from: urlComp)
       return url
     case .serverConfig:
-      let urlComp = try createAuthApiUrlComponent(version: version, forAction: "stream", id: apiId)
+      var urlComp = try createAuthApiUrlComponent(version: version, forAction: "stream", id: apiId)
       // let the server decide which format to use
+      if maxBitrate != .noLimit {
+        urlComp.addQueryItem(name: "maxBitRate", value: maxBitrate.rawValue)
+      }
       let url = try createUrl(from: urlComp)
       return url
     case .raw:

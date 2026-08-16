@@ -361,6 +361,30 @@ public enum CacheTranscodingFormatPreference: Int, CaseIterable, Sendable, Codab
   }
 }
 
+// MARK: - CacheMaxBitratePreference
+
+public enum CacheMaxBitratePreference: Int, CaseIterable, Sendable, Codable {
+  case noLimit = 0
+  case limit32 = 32
+  case limit64 = 64
+  case limit96 = 96
+  case limit128 = 128
+  case limit192 = 192
+  case limit256 = 256
+  case limit320 = 320
+
+  public static let defaultValue: CacheMaxBitratePreference = .noLimit
+
+  public var description: String {
+    switch self {
+    case .noLimit:
+      return "No Limit (default)"
+    default:
+      return "\(rawValue) kbps"
+    }
+  }
+}
+
 // MARK: - VisualizerType
 
 public enum VisualizerType: String, CaseIterable, Sendable, Codable {
