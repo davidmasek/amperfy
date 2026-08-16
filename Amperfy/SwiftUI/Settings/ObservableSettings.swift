@@ -51,6 +51,8 @@ final class Settings: ObservableObject {
   @Published
   var cacheTranscodingFormatPreference: CacheTranscodingFormatPreference = .defaultValue
   @Published
+  var cacheMaxBitratePreference: CacheMaxBitratePreference = .defaultValue
+  @Published
   var isAutoCacheLatestSongs = false
   @Published
   var isAutoCacheLatestPodcastEpisodes = false

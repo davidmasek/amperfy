@@ -781,6 +781,10 @@ final class AmpacheXmlServerApi: URLCleanser, Sendable {
     switch settings.user.cacheTranscodingFormatPreference {
     case .mp3:
       urlComp.addQueryItem(name: "format", value: "mp3")
+      let maxBitrate = settings.user.cacheMaxBitratePreference
+      if maxBitrate != .noLimit {
+        urlComp.addQueryItem(name: "bitrate", value: maxBitrate.rawValue)
+      }
     default:
       urlComp.addQueryItem(name: "format", value: "raw")
     }
