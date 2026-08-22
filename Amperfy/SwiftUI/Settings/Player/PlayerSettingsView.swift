@@ -68,6 +68,10 @@ struct PlayerSettingsView: View {
     settings.cacheTranscodingFormatPreference = format
   }
 
+  private func updateCacheBitrate(_ bitrate: CacheMaxBitratePreference) {
+    settings.cacheMaxBitratePreference = bitrate
+  }
+
   var body: some View {
     ZStack {
       SettingsList {
@@ -205,6 +209,22 @@ struct PlayerSettingsView: View {
             """
         )
         """)
+
+        // Cache Bitrate Settings
+        SettingsSection(
+          content: {
+            SettingsRow(title: "Cache\nBitrate Limit") {
+              Menu(settings.cacheMaxBitratePreference.description) {
+                ForEach(CacheMaxBitratePreference.allCases, id: \.self) { bitrate in
+                  Button(bitrate.description) {
+                    updateCacheBitrate(bitrate)
+                  }
+                }
+              }
+            }
+          },
+          footer: "Set the maximum bitrate for cached/downloaded songs. Only applies when Cache Format is not 'Raw/Original'. Changes will not apply to already downloaded songs."
+        )
       }
     }
     .navigationTitle("Player, Stream & Scrobble")
