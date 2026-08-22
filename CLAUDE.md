@@ -6,8 +6,16 @@ learning iOS dev and for preparing PRs back upstream.
 
 ## Remotes
 
-- `origin` → your fork, push here.
-- `upstream` → `BLeeEZ/amperfy`, pull-only, PRs target this.
+- `origin` → your fork, push here. **Default PR target — see hard rule below.**
+- `upstream` → `BLeeEZ/amperfy`, pull-only. Never push here.
+
+## PRs — hard rule
+
+**Every PR defaults to `origin` (this fork) only.** Never open a PR against `upstream`
+(`BLeeEZ/amperfy`) without the user's explicit, per-PR approval given at the time —
+a general intention stated earlier in the conversation ("let's aim upstream eventually")
+does **not** count as approval for a specific PR. Before running `gh pr create` (or
+anything else) with `--repo BLeeEZ/amperfy` or any other upstream target, stop and ask.
 
 ## Branching
 
