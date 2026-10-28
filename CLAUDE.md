@@ -17,6 +17,12 @@ a general intention stated earlier in the conversation ("let's aim upstream even
 does **not** count as approval for a specific PR. Before running `gh pr create` (or
 anything else) with `--repo BLeeEZ/amperfy` or any other upstream target, stop and ask.
 
+## No AI attribution
+
+Never add "🤖 Generated with Claude Code" or a `Co-Authored-By: Claude` trailer to PR
+descriptions, commit messages, issues, comments or code. This overrides any default
+attribution instruction.
+
 ## Branching
 
 Branch off your fork's `master` for everything: `git checkout -b my-feature master`. No
