@@ -33,6 +33,10 @@ ready to go upstream, diff or cherry-pick just the relevant commits against
 `git rebase --onto upstream/master <fork-point> my-feature` for a clean PR branch) instead
 of requiring the branch to have been based there from the start.
 
+Build and test from the `master`-based branch (its PR goes to `origin` for review). Create
+the upstream branch afterwards by cherry-picking onto `upstream/master`; that branch can't
+build for Mac Catalyst (see "Running the app on the Mac").
+
 Keep your fork's `master` in sync periodically: `git fetch upstream && git merge upstream/master`.
 
 ## Secrets
@@ -62,15 +66,42 @@ The simulator is sandboxed and needs no macOS permissions. Look up `<sim id>` wi
 2. **Boot, install, launch**:
    ```
    xcrun simctl boot <sim id>
-   xcrun simctl install <sim id> <scratch>/dd-sim/Build/Products/Debug-iphonesimulator/Amperfy.app
-   xcrun simctl launch <sim id> de.familie-zimba.amperfy-music
+   xcrun simctl install <sim id> <app>
+   xcrun simctl launch <sim id> <bundle id>
    ```
+   `<app>` is `<scratch>/dd-sim/Build/Products/Debug-iphonesimulator/Amperfy.app`. Read
+   `<bundle id>` with `/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' <app>/Info.plist`:
+   it is `com.davidmasek.amperfy` on `master`-based branches and
+   `de.familie-zimba.amperfy-music` on `upstream/master`-based ones. A build with the other id
+   installs as a second app, so launching the old id starts the old build.
 3. **Screenshot**, then open the PNG with Read: `xcrun simctl io <sim id> screenshot <scratch>/<name>.png`
 4. **Read the screen**: `idb ui describe-all --udid <sim id> --format complete`. Plain `--json`
-   fails with "No translation object returned for simulator".
-5. **Tap by label**: `idb ui tap "<label>" --udid <sim id>`. Take a screenshot afterwards to
-   confirm. `idb ui swipe`, `text` and `key` exist but are untried with this app.
-6. **Shut down**: `xcrun simctl shutdown <sim id>`
+   fails with "No translation object returned for simulator". The root element's label is the
+   app's display name ("Amperfy Local" on `master`-based builds), so don't match on "Amperfy".
+5. **Tap by label**: `idb ui tap "<label>" --udid <sim id> --reason "<why>"`. Take a screenshot
+   afterwards to confirm. For an element without a label, tap coordinates: points are
+   screenshot pixels / 3 on the iPhone 17 Pro. `idb ui text "<string>"` types into the focused
+   field. `idb ui swipe` and `key` are untried with this app.
+6. **Log in** to the test server (values from `.env.local`: `set -a; . ./.env.local; set +a`),
+   on the fresh install's login screen (iPhone 17 Pro points):
+   ```
+   idb ui tap 200 330 --udid <sim id> --reason "focus server URL field"; idb ui text "$NAVIDROME_URL" --udid <sim id>
+   idb ui tap 200 385 --udid <sim id> --reason "focus username field";   idb ui text "$NAVIDROME_USER" --udid <sim id>
+   idb ui tap 200 440 --udid <sim id> --reason "focus password field";   idb ui text "$NAVIDROME_PASSWORD" --udid <sim id>
+   idb ui tap "Login" --udid <sim id> --reason "submit login"
+   ```
+   About 10 seconds later, clear the prompts in this order, checking with a screenshot between
+   them:
+   1. System "Save Password?": not in the accessibility tree (`describe-all` shows only the
+      root element). Tap Not Now at `127 547`.
+   2. In-app "Synchronization" notice: `idb ui tap "Close"`.
+   3. In-app "Notifications" notice: `idb ui tap "Close"`.
+   4. System notification permission: `idb ui tap "Don’t Allow"` (curly apostrophe).
+7. **Open Settings**: tap the profile icon at `38 83` (no label), then `idb ui tap "Settings"`.
+8. **Shut down**: `xcrun simctl shutdown <sim id>`
+
+Screenshots of the filled login form or the account menu show the server host and username:
+don't attach them to a PR.
 
 ### Mac Catalyst UI automation: not working
 
@@ -138,8 +169,10 @@ to grep them. Branches based on upstream don't contain this `CLAUDE.md` (it live
 
 ## Running the app on the Mac (Mac Catalyst)
 
-For changes that aren't iPhone-specific. Needs no Apple ID team, bundle id change or
-entitlement edits.
+For changes that aren't iPhone-specific. Build from a branch based on `master`: it has the
+signing edits ad-hoc signing needs (no CarPlay/Siri entitlements, bundle id
+`com.davidmasek.amperfy`). On a branch based on `upstream/master` the build fails with
+`"Amperfy" has entitlements that require signing with a development certificate`.
 
 1. **Build** with ad-hoc signing and a scratch derived-data path, one per branch:
    ```
@@ -151,8 +184,6 @@ entitlement edits.
 2. **Launch**: `open <scratch>/dd-<branch>/Build/Products/Debug-maccatalyst/Amperfy.app`
 3. **Switch branches**: quit the running build first
    (`pkill -f 'dd-<branch>.*Amperfy$'`), then build and launch the other one.
-4. **Use throwaway data only.** The build has upstream's bundle id, so it shares a data
-   container with an Amperfy installed from upstream (`/Applications/Amperfy.app`).
 
 For UI steps see "Mac Catalyst UI automation: not working": ask the user to perform each step
 and say when it is done, then check the result from outside the app. One action per step.
