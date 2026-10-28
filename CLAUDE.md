@@ -44,6 +44,7 @@ for the format. Currently points at a personal Navidrome instance reachable over
 - Real-device signing: free/personal Apple ID team works, but `Amperfy/Amperfy.entitlements`
   requests CarPlay + Siri entitlements that a free account can't get approved — clear those
   entries to sideload locally. Also change the bundle identifier (upstream's isn't yours to sign).
+  Exact steps: see "Running tests / benchmarks on a physical iPhone" below.
 
 ## Simulator automation (not set up yet)
 
@@ -54,6 +55,60 @@ Terminal doesn't have macOS Accessibility permission in this environment. So Cla
 confirm "it builds and launches," not "this specific screen renders correctly" — that
 still needs a manual check in the Simulator for now. Worth revisiting properly later
 (install `idb`, or grant Accessibility access) if this comes up often.
+
+## Running tests / benchmarks on a physical iPhone
+
+1. **Throwaway branch** off the branch under test: `git checkout -b bench/<name> <base>`.
+   The signing edits below must never be committed or pushed.
+2. **Find the device**: `xcrun xctrace list devices`. The UDID is the id in parentheses after
+   the iPhone entry under `== Devices ==`. Use it as `<UDID>` in step 4. Don't commit it (a
+   hardware identifier). The phone must be unlocked and in developer mode.
+3. **Signing edits**, skip if `grep -c siri Amperfy/Amperfy.entitlements` already prints `0`:
+   - In `Amperfy/Amperfy.entitlements` delete the `com.apple.developer.carplay-audio` and
+     `com.apple.developer.siri` key/value pairs (free team can't provision them):
+     `sed -i '' '/carplay-audio/,+1d;/developer.siri/,+1d' Amperfy/Amperfy.entitlements`
+   - In `Amperfy.xcodeproj/project.pbxproj` change **only the app target's** bundle id:
+     `sed -i '' 's/PRODUCT_BUNDLE_IDENTIFIER = "de.familie-zimba.amperfy-music";/PRODUCT_BUNDLE_IDENTIFIER = com.davidmasek.amperfy;/' Amperfy.xcodeproj/project.pbxproj`
+   - Do NOT pass `PRODUCT_BUNDLE_IDENTIFIER=...` on the xcodebuild command line: it leaks into
+     the SPM frameworks and install fails with "Found bundle ... with the same identifier".
+4. **Run**, with a scratch derived-data path. `4UM92Y5NRT` is my team ID (not a secret, it is
+   in `project.pbxproj`):
+   ```
+   xcodebuild test -project Amperfy.xcodeproj -scheme Amperfy \
+     -destination 'platform=iOS,id=<UDID>' \
+     -only-testing:AmperfyKitTests/<TestClass> \
+     -derivedDataPath <scratch>/dd -allowProvisioningUpdates DEVELOPMENT_TEAM=4UM92Y5NRT \
+     > <scratch>/dev.log 2>&1
+   grep -E "BENCH|error:|TEST (SUCCEEDED|FAILED)|Recovery Suggestion" <scratch>/dev.log | sort -u
+   ```
+   Same command with `-destination 'platform=iOS Simulator,id=<sim id>'` (and no
+   `-allowProvisioningUpdates`/team) works for a simulator sanity check first.
+5. **First install on a new phone** fails with "Developer App certificate is not trusted":
+   on the phone, Settings > General > VPN & Device Management > the Apple Development
+   profile > Trust, keep it unlocked, rerun.
+6. **New test files aren't picked up** (no folder sync in the project): either add the file to
+   the `AmperfyKitTests` target in Xcode, or append the test class to
+   `AmperfyKitTests/AmpertyKitTests.swift`.
+7. **Before pushing the bench branch**: `git checkout -- Amperfy/Amperfy.entitlements
+   Amperfy.xcodeproj/project.pbxproj`, commit only the test file, push to `origin` (never
+   `upstream`).
+
+Test `print` output shows up in the `xcodebuild` log, so prefix lines with a tag like `BENCH`
+to grep them. Branches based on upstream don't contain this `CLAUDE.md` (it lives on `master`).
+
+## Writing docs and comments (CLAUDE.md, README, code comments)
+
+- Write only what changes what the reader does. Cut anything else.
+- Don't describe the doc's own status or history ("proven", "tested", "used for PR #N",
+  "last run on X"). Readers assume a doc is correct and current; git has the history. If
+  something is unverified, say exactly what ("step 3 untested on Release builds").
+- Put each note at the step or line where it applies, not in an intro paragraph.
+- Be concrete: exact commands, paths, flags, and the exact error text a failure shows.
+  "Run the tests" is not an instruction; the full command is.
+- Say the action, not what is or isn't stored. "Look up the UDID with `<command>`" beats
+  "the UDID is not stored here".
+- Keep each step to one action. Reasons get one clause, only when skipping the step would
+  look reasonable but break things.
 
 ## Before opening a PR
 
