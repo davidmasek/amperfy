@@ -46,15 +46,18 @@ for the format. Currently points at a personal Navidrome instance reachable over
   entries to sideload locally. Also change the bundle identifier (upstream's isn't yours to sign).
   Exact steps: see "Running tests / benchmarks on a physical iPhone" below.
 
-## Simulator automation (not set up yet)
+## Simulator automation
 
 Claude can build, run `AmperfyKitTests`, and launch the app in the iOS Simulator to check
-it doesn't crash on boot — but there's no way to script taps/navigation yet: no
-`idb`/Appium is installed, and `osascript`/System Events UI scripting is blocked because
-Terminal doesn't have macOS Accessibility permission in this environment. So Claude can
-confirm "it builds and launches," not "this specific screen renders correctly" — that
-still needs a manual check in the Simulator for now. Worth revisiting properly later
-(install `idb`, or grant Accessibility access) if this comes up often.
+it doesn't crash on boot.
+
+- **Taps/navigation in the Simulator or on a device:** `idb` and `idb_companion` are
+  installed. Untested with this app. Start with `idb help agent`; read the screen with
+  `idb ui describe-all --json`, tap with `idb ui tap "<label>"`.
+- **`osascript`/System Events UI scripting:** blocked, Terminal has no macOS Accessibility
+  permission.
+- **Mac Catalyst build:** `idb` does not drive it. Computer use and granting Terminal
+  Accessibility access are both untested. Until one is tried, ask the user to do the UI steps.
 
 ## Running tests / benchmarks on a physical iPhone
 
@@ -114,9 +117,9 @@ entitlement edits.
 4. **Use throwaway data only.** The build has upstream's bundle id, so it shares a data
    container with an Amperfy installed from upstream (`/Applications/Amperfy.app`).
 
-Taps can't be scripted (see "Simulator automation"): ask the user to perform the UI steps and
-to say when each is done, then check the result from outside the app. Step through one action at a
-time instead of running the whole scenario at once.
+For UI steps see "Simulator automation": until a way to tap in the Mac build is tried, ask
+the user to perform each step and say when it is done, then check the result from outside the
+app. One action per step.
 
 ## Writing docs and comments (CLAUDE.md, README, code comments)
 
