@@ -54,16 +54,47 @@ for the format. Currently points at a personal Navidrome instance reachable over
 
 ## Simulator automation
 
-Claude can build, run `AmperfyKitTests`, and launch the app in the iOS Simulator to check
-it doesn't crash on boot.
+Claude can build, run `AmperfyKitTests`, and drive the app in the iOS Simulator with `idb`.
+The simulator is sandboxed and needs no macOS permissions. Look up `<sim id>` with
+`xcrun simctl list devices available`.
 
-- **Taps/navigation in the Simulator or on a device:** `idb` and `idb_companion` are
-  installed. Untested with this app. Start with `idb help agent`; read the screen with
-  `idb ui describe-all --json`, tap with `idb ui tap "<label>"`.
-- **`osascript`/System Events UI scripting:** blocked, Terminal has no macOS Accessibility
-  permission.
-- **Mac Catalyst build:** `idb` does not drive it. Computer use and granting Terminal
-  Accessibility access are both untested. Until one is tried, ask the user to do the UI steps.
+1. **Build** with `xcodebuild build -project Amperfy.xcodeproj -scheme Amperfy -destination 'platform=iOS Simulator,id=<sim id>' -derivedDataPath <scratch>/dd-sim`
+2. **Boot, install, launch**:
+   ```
+   xcrun simctl boot <sim id>
+   xcrun simctl install <sim id> <scratch>/dd-sim/Build/Products/Debug-iphonesimulator/Amperfy.app
+   xcrun simctl launch <sim id> de.familie-zimba.amperfy-music
+   ```
+3. **Screenshot**, then open the PNG with Read: `xcrun simctl io <sim id> screenshot <scratch>/<name>.png`
+4. **Read the screen**: `idb ui describe-all --udid <sim id> --format complete`. Plain `--json`
+   fails with "No translation object returned for simulator".
+5. **Tap by label**: `idb ui tap "<label>" --udid <sim id>`. Take a screenshot afterwards to
+   confirm. `idb ui swipe`, `text` and `key` exist but are untried with this app.
+6. **Shut down**: `xcrun simctl shutdown <sim id>`
+
+### Mac Catalyst UI automation: not working
+
+Ask the user to do UI steps in the Mac build. `idb` does not drive Mac Catalyst windows.
+Tried or deliberately skipped:
+
+- **`osascript` / System Events:** blocked, Terminal has no Accessibility permission. Granting
+  it allows controlling the whole Mac, so it stays off.
+- **`screencapture -x`:** fails with "could not create image from display" (Terminal has no
+  Screen Recording permission, cause unverified). Screenshots without control are not worth the grant.
+- **Claude computer use:** untried. It is not available in the CLI session; it needs the Claude
+  desktop app with Computer use turned on, and grants access per application.
+- **XCUITest on Mac Catalyst:** does not run yet. Xcode 26.6, File > New > Target > UI Testing
+  Bundle (org id `com.davidmasek`), target to test `Amperfy`:
+  - Set on the new target: `SDKROOT = iphoneos`, `SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"`,
+    `SUPPORTS_MACCATALYST = YES`, `IPHONEOS_DEPLOYMENT_TARGET = 26.0`,
+    `MACOSX_DEPLOYMENT_TARGET = 26.0`. Without them the run stops with "My Mac's macOS 26.2
+    doesn't match AmperfyUITests's macOS 26.5 deployment target".
+  - With `CODE_SIGN_IDENTITY=-` the runner launches, then fails with "Failed to load the test
+    bundle ... mapping process and mapped file (non-platform) have different Team IDs".
+  - Untried: sign with `DEVELOPMENT_TEAM=4UM92Y5NRT` plus the entitlement and bundle id edits
+    from "Running tests / benchmarks on a physical iPhone". Also untried: whether macOS asks
+    the test runner for an Accessibility permission.
+  - Xcode raises the project's `objectVersion` from 54 to 70. Never commit that in an upstream PR.
 
 ## Running tests / benchmarks on a physical iPhone
 
@@ -123,9 +154,8 @@ entitlement edits.
 4. **Use throwaway data only.** The build has upstream's bundle id, so it shares a data
    container with an Amperfy installed from upstream (`/Applications/Amperfy.app`).
 
-For UI steps see "Simulator automation": until a way to tap in the Mac build is tried, ask
-the user to perform each step and say when it is done, then check the result from outside the
-app. One action per step.
+For UI steps see "Mac Catalyst UI automation: not working": ask the user to perform each step
+and say when it is done, then check the result from outside the app. One action per step.
 
 ## Writing docs and comments (CLAUDE.md, README, code comments)
 
