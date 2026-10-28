@@ -96,6 +96,28 @@ still needs a manual check in the Simulator for now. Worth revisiting properly l
 Test `print` output shows up in the `xcodebuild` log, so prefix lines with a tag like `BENCH`
 to grep them. Branches based on upstream don't contain this `CLAUDE.md` (it lives on `master`).
 
+## Running the app on the Mac (Mac Catalyst)
+
+For changes that aren't iPhone-specific. Needs no Apple ID team, bundle id change or
+entitlement edits.
+
+1. **Build** with ad-hoc signing and a scratch derived-data path, one per branch:
+   ```
+   xcodebuild build -project Amperfy.xcodeproj -scheme Amperfy \
+     -destination 'platform=macOS,variant=Mac Catalyst' \
+     -derivedDataPath <scratch>/dd-<branch> \
+     CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=YES
+   ```
+2. **Launch**: `open <scratch>/dd-<branch>/Build/Products/Debug-maccatalyst/Amperfy.app`
+3. **Switch branches**: quit the running build first
+   (`pkill -f 'dd-<branch>.*Amperfy$'`), then build and launch the other one.
+4. **Use throwaway data only.** The build has upstream's bundle id, so it shares a data
+   container with an Amperfy installed from upstream (`/Applications/Amperfy.app`).
+
+Taps can't be scripted (see "Simulator automation"): ask the user to perform the UI steps and
+to say when each is done, then check the result from outside the app. Step through one action at a
+time instead of running the whole scenario at once.
+
 ## Writing docs and comments (CLAUDE.md, README, code comments)
 
 - Write only what changes what the reader does. Cut anything else.
