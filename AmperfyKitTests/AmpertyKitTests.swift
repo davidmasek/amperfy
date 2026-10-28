@@ -22,6 +22,8 @@
 @testable import AmperfyKit
 import XCTest
 
+// MARK: - AmperfyKitTests
+
 class AmperfyKitTests: XCTestCase {
   override func setUpWithError() throws {
     // Put setup code here. This method is called before the invocation of each test method in the class.
@@ -44,5 +46,44 @@ class AmperfyKitTests: XCTestCase {
     measure {
       // Put the code you want to measure the time of here.
     }
+  }
+}
+
+// MARK: - ArtworkCacheSizeBenchTest
+
+class ArtworkCacheSizeBenchTest: XCTestCase {
+  func testBenchGetArtworkCacheSize() throws {
+    let fm = CacheFileManager.shared
+    let info = AccountInfo(
+      serverHash: "bench-\(UUID().uuidString)",
+      userHash: "bench",
+      apiType: .notDetected
+    )
+    let dir = try XCTUnwrap(fm.getOrCreateAbsoluteArtworksDirectory(for: info))
+    defer { try? FileManager.default.removeItem(at: dir.deletingLastPathComponent()) }
+
+    // ~60 KB each, roughly a cached cover
+    let payload = Data(repeating: 0xAB, count: 60_000)
+    var created = 0
+    var report = "BENCH device-results (ms; median of 7 runs, 1 cold run first)\n"
+    for target in [100, 1000, 10_000] {
+      while created < target {
+        try payload.write(to: dir.appendingPathComponent("\(created).png"))
+        created += 1
+      }
+      var times = [Double]()
+      var size: Int64 = 0
+      for _ in 0 ..< 8 {
+        let start = DispatchTime.now().uptimeNanoseconds
+        size = fm.getArtworkCacheSize(for: info)
+        times.append(Double(DispatchTime.now().uptimeNanoseconds - start) / 1e6)
+      }
+      let cold = times[0]
+      let warm = times.dropFirst().sorted()[3]
+      XCTAssertEqual(size, Int64(target * 60_000))
+      report +=
+        "BENCH n=\(target) cold=\(String(format: "%.2f", cold)) median=\(String(format: "%.2f", warm)) min=\(String(format: "%.2f", times.dropFirst().min()!)) max=\(String(format: "%.2f", times.dropFirst().max()!))\n"
+    }
+    print(report)
   }
 }
