@@ -20,7 +20,8 @@ yourself.
   goes on the branch's PR as `status: parked` plus a line in its description.
 - CLAUDE.md's hard rules apply: nothing upstream without per-item approval, no AI
   attribution anywhere.
-- Never edit files in, or remove, another session's worktree. Report it instead.
+- Never edit files in, or remove, a worktree that is in use (snapshot: `in use: yes`, a
+  process's working directory is inside it). Report it instead.
 
 ## Conventions you enforce
 
@@ -77,11 +78,22 @@ section and the snapshot's "Open fork issues" are what change.
    - close fork PRs and fork issues
    - delete a branch, local and on origin. First check: no unpushed commits, not checked
      out in any worktree.
+   - remove a finished worktree, then delete its branch. Only when the snapshot shows
+     `dirty files: 0, in use: no, merged: yes`. Right before removing, re-check that
+     `lsof -a -d cwd -Fn | grep -F <path>` prints nothing, then run
+     `git worktree remove <path>`, `git branch -d <branch>` (`-D` if its fork PR was
+     closed unmerged), `git push origin --delete <branch>`.
    - open a fork PR for a branch that has none
+   - merge a fork PR into `master`: `gh pr merge <n> -R davidmasek/amperfy --merge`.
+     Never squash: upstream-bound branches are cherry-picked from these commits.
+   - drop a stash entry (stashes are shared by all worktrees and sessions): right before
+     dropping, look up its current index with `git stash list --format='%gd %H %gs'`,
+     then `git stash drop 'stash@{<n>}'` and check the SHA it prints. `drop <sha>` fails
+     with "is not a stash reference".
    - start a worker (see Workers)
    - change CLAUDE.md, this skill or other agent setup: on a branch, as a fork PR
-3. **Never, even if approved in passing:** push to `master` (the user merges fork PRs),
-   force-push, or anything on `BLeeEZ/amperfy` without CLAUDE.md's explicit per-PR approval.
+3. **Never, even if approved in passing:** push directly to `master` (it changes only by
+   merging a fork PR), force-push, or anything on `BLeeEZ/amperfy` without CLAUDE.md's explicit per-PR approval.
 
 After acting, report what you did. The user approves the result; follow-ups become
 issues or wait for the next run.
@@ -125,7 +137,7 @@ forgotten the details: say what the thing is in plain words ("cache bitrate cap"
   (e.g. a new fork PR they'll read before anything goes upstream).
 - **Routine**: actions needing no thought. Labels that follow from the facts, closing
   finished PRs, deleting branches whose work is merged or identical elsewhere, removing
-  `ai-reported` from an issue a PR reproduced. Group by kind of action (one item for all
+  finished worktrees (`in use: no, merged: yes`, no dirty files), removing `ai-reported` from an issue a PR reproduced. Group by kind of action (one item for all
   PR and issue labels, one for all deletions), not by where the fact came from.
 - **Later**: recommended, but not now, e.g. an upstream sync while several branches are
   in flight.
