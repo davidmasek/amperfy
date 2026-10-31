@@ -26,6 +26,10 @@ a general intention stated earlier in the conversation ("let's aim upstream even
 does **not** count as approval for a specific PR. Before running `gh pr create` (or
 anything else) with `--repo BLeeEZ/amperfy` or any other upstream target, stop and ask.
 
+In fork issues, PRs and commit messages, refer to an upstream issue or PR as
+`` `upstream#564` `` (in backticks), not a link or `BLeeEZ/amperfy#564`: a link posts a
+"mentioned this" notice on the upstream item. `/fork-manager` finds the backtick form.
+
 ## No AI attribution
 
 Never add "🤖 Generated with Claude Code" or a `Co-Authored-By: Claude` trailer to PR
