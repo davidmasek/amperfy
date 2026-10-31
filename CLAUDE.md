@@ -59,11 +59,20 @@ for the format. Currently points at a personal Navidrome instance reachable over
 ## Simulator automation
 
 Claude can build, run `AmperfyKitTests`, and drive the app in the iOS Simulator with `idb`.
-The simulator is sandboxed and needs no macOS permissions. Look up `<sim id>` with
-`xcrun simctl list devices available`.
+The simulator is sandboxed and needs no macOS permissions. Simulators are shared across the
+Mac: every session that uses the same `<sim id>` drives the same phone, app install, login and
+app data.
 
-1. **Build** with `xcodebuild build -project Amperfy.xcodeproj -scheme Amperfy -destination 'platform=iOS Simulator,id=<sim id>' -derivedDataPath <scratch>/dd-sim`
-2. **Boot, install, launch**:
+1. **Create your own simulator** for the session:
+   ```
+   xcrun simctl list devices booted
+   xcrun simctl create "claude-<task>" com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro
+   ```
+   `create` prints the new `<sim id>`. Use only that device: never one that `list devices booted`
+   shows, or one you didn't create, because the user or another session may be using it. Keep
+   the iPhone 17 Pro type: the tap coordinates below are its points.
+2. **Build** with `xcodebuild build -project Amperfy.xcodeproj -scheme Amperfy -destination 'platform=iOS Simulator,id=<sim id>' -derivedDataPath <scratch>/dd-sim`
+3. **Boot, install, launch**:
    ```
    xcrun simctl boot <sim id>
    xcrun simctl install <sim id> <app>
@@ -74,15 +83,15 @@ The simulator is sandboxed and needs no macOS permissions. Look up `<sim id>` wi
    it is `com.davidmasek.amperfy` on `master`-based branches and
    `de.familie-zimba.amperfy-music` on `upstream/master`-based ones. A build with the other id
    installs as a second app, so launching the old id starts the old build.
-3. **Screenshot**, then open the PNG with Read: `xcrun simctl io <sim id> screenshot <scratch>/<name>.png`
-4. **Read the screen**: `idb ui describe-all --udid <sim id> --format complete`. Plain `--json`
+4. **Screenshot**, then open the PNG with Read: `xcrun simctl io <sim id> screenshot <scratch>/<name>.png`
+5. **Read the screen**: `idb ui describe-all --udid <sim id> --format complete`. Plain `--json`
    fails with "No translation object returned for simulator". The root element's label is the
    app's display name ("Amperfy Local" on `master`-based builds), so don't match on "Amperfy".
-5. **Tap by label**: `idb ui tap "<label>" --udid <sim id> --reason "<why>"`. Take a screenshot
+6. **Tap by label**: `idb ui tap "<label>" --udid <sim id> --reason "<why>"`. Take a screenshot
    afterwards to confirm. For an element without a label, tap coordinates: points are
    screenshot pixels / 3 on the iPhone 17 Pro. `idb ui text "<string>"` types into the focused
    field. `idb ui swipe` and `key` are untried with this app.
-6. **Log in** to the test server (values from `.env.local`: `set -a; . ./.env.local; set +a`),
+7. **Log in** to the test server (values from `.env.local`: `set -a; . ./.env.local; set +a`),
    on the fresh install's login screen (iPhone 17 Pro points):
    ```
    idb ui tap 200 330 --udid <sim id> --reason "focus server URL field"; idb ui text "$NAVIDROME_URL" --udid <sim id>
@@ -97,9 +106,14 @@ The simulator is sandboxed and needs no macOS permissions. Look up `<sim id>` wi
    2. In-app "Synchronization" notice: `idb ui tap "Close"`.
    3. In-app "Notifications" notice: `idb ui tap "Close"`.
    4. System notification permission: `idb ui tap "Don’t Allow"` (curly apostrophe).
-7. **Open Settings**: tap the profile icon at `38 83` (no label), then `idb ui tap "Settings"`.
-8. **Shut down**: `xcrun simctl terminate <sim id> <bundle id>`, then `xcrun simctl shutdown <sim id>`
-   only if you booted this simulator for the task.
+8. **Open Settings**: tap the profile icon at `38 83` (no label), then `idb ui tap "Settings"`.
+9. **Shut down and delete** the device you created:
+   ```
+   xcrun simctl terminate <sim id> <bundle id>
+   xcrun simctl shutdown <sim id>
+   xcrun simctl delete <sim id>
+   ```
+   Never shut down or delete a device you didn't create.
 
 Screenshots of the filled login form or the account menu show the server host and username:
 don't attach them to a PR.
@@ -107,13 +121,12 @@ don't attach them to a PR.
 ### Playing music in the simulator
 
 Simulator audio comes out of the Mac's speakers and `simctl` has no mute. Ask the user before
-pressing play, and run `xcrun simctl terminate <sim id> <bundle id>` as soon as the check is
-done: a playing app keeps sounding until it is stopped.
+the first play of the session, and run `xcrun simctl terminate <sim id> <bundle id>` as soon
+as the check is done: a playing app keeps sounding until it is stopped.
 
 Setting `_playerVolume` to 0 in the `settings.user` JSON of the app's preferences plist
 silences it, but only if the simulator is shut down while editing (a booted simulator's
-`cfprefsd` serves the old value). Don't shut down a simulator you didn't boot for this task:
-parallel work may be using it.
+`cfprefsd` serves the old value).
 
 1. **Play**: `idb ui tap 100 220` opens the first Random Album on Home, `idb ui tap "Play"`
    starts it, `idb ui tap 150 755` opens the full player. Close the player with
