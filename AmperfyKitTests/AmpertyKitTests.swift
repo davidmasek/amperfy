@@ -22,6 +22,8 @@
 @testable import AmperfyKit
 import XCTest
 
+// MARK: - AmperfyKitTests
+
 class AmperfyKitTests: XCTestCase {
   override func setUpWithError() throws {
     // Put setup code here. This method is called before the invocation of each test method in the class.
@@ -44,5 +46,35 @@ class AmperfyKitTests: XCTestCase {
     measure {
       // Put the code you want to measure the time of here.
     }
+  }
+}
+
+// MARK: - MimeFileConverterTest
+
+class MimeFileConverterTest: XCTestCase {
+  func testM4bGetsMp4Extension() {
+    XCTAssertEqual(MimeFileConverter.getFilenameExtension(mimeType: "audio/m4b"), "mp4")
+    XCTAssertEqual(MimeFileConverter.getFilenameExtension(mimeType: "audio/x-m4b"), "mp4")
+    XCTAssertEqual(MimeFileConverter.getFilenameExtension(mimeType: "Audio/M4B"), "mp4")
+  }
+
+  func testM4aExtensions() {
+    XCTAssertEqual(MimeFileConverter.getFilenameExtension(mimeType: "audio/m4a"), "mp4")
+    XCTAssertEqual(MimeFileConverter.getFilenameExtension(mimeType: "audio/x-m4a"), "m4a")
+    XCTAssertEqual(MimeFileConverter.getFilenameExtension(mimeType: "audio/mp4"), "mp4")
+  }
+
+  func testOtherExtensionsUnchanged() {
+    XCTAssertEqual(MimeFileConverter.getFilenameExtension(mimeType: "audio/mpeg"), "mp3")
+    XCTAssertEqual(MimeFileConverter.getFilenameExtension(mimeType: "audio/x-flac"), "flac")
+    XCTAssertEqual(MimeFileConverter.getFilenameExtension(mimeType: "audio/ogg"), "ogg")
+    XCTAssertEqual(MimeFileConverter.getFilenameExtension(mimeType: nil), "unknown")
+  }
+
+  func testM4bIsConvertedForPlayer() {
+    XCTAssertEqual(
+      MimeFileConverter.convertToValidMimeTypeWhenNeccessary(mimeType: "audio/m4b"),
+      "audio/mp4"
+    )
   }
 }
