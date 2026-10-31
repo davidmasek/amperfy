@@ -252,6 +252,19 @@ public class AbstractPlayable: AbstractLibraryEntity, Downloadable {
     return type
   }
 
+  /// Actual bitrate (bits per second) of the locally cached file, derived from its size on disk
+  /// and the song duration. `bitrate` reflects the source library's original file and does not
+  /// account for transcoding applied when the file was downloaded/cached, so this should be
+  /// preferred whenever a cached copy is what's actually being played.
+  public var cachedFileBitrate: Int? {
+    guard let relFilePath, duration > 0,
+          let absPath = CacheFileManager.shared.getAbsoluteAmperfyPath(relFilePath: relFilePath),
+          let fileSize = try? FileManager.default
+          .attributesOfItem(atPath: absPath.path)[.size] as? Int
+    else { return nil }
+    return (fileSize * 8) / duration
+  }
+
   public var iOsCompatibleContentType: String? {
     guard isPlayableOniOS, let type = fileContentType else { return nil }
     return MimeFileConverter.convertToValidMimeTypeWhenNeccessary(mimeType: type)
