@@ -80,6 +80,13 @@ class SsPlayableParserDelegate: SsXmlLibWithArtworkParser {
       if let attributeBitrate = attributeDict["bitRate"], let bitrate = Int(attributeBitrate) {
         playableBuffer?.bitrate = bitrate * 1000 // kb per second -> save as byte per second
       }
+      if let attributeSamplingRate = attributeDict["samplingRate"],
+         let samplingRate = Int(attributeSamplingRate) {
+        playableBuffer?.sampleRate = samplingRate
+      }
+      if let attributeBitDepth = attributeDict["bitDepth"], let bitDepth = Int(attributeBitDepth) {
+        playableBuffer?.bitDepth = bitDepth
+      }
       if let contentType = attributeDict["contentType"] {
         playableBuffer?.contentType = contentType
       }

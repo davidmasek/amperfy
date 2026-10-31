@@ -220,7 +220,25 @@ public class AbstractPlayable: AbstractLibraryEntity, Downloadable {
     }
   }
 
-  public var bitrate: Int { // byte per second
+  public var sampleRate: Int { // Hz, 0 if unknown
+    get { Int(playableManagedObject.sampleRate) }
+    set {
+      guard Int32.isValid(value: newValue),
+            playableManagedObject.sampleRate != Int32(newValue) else { return }
+      playableManagedObject.sampleRate = Int32(newValue)
+    }
+  }
+
+  public var bitDepth: Int { // bits per sample, 0 if unknown
+    get { Int(playableManagedObject.bitDepth) }
+    set {
+      guard Int32.isValid(value: newValue),
+            playableManagedObject.bitDepth != Int32(newValue) else { return }
+      playableManagedObject.bitDepth = Int32(newValue)
+    }
+  }
+
+  public var bitrate: Int { // bits per second
     get { Int(playableManagedObject.bitrate) }
     set {
       guard Int32.isValid(value: newValue),
