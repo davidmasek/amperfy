@@ -75,3 +75,6 @@ fastlane/test_output
 
 # Local-only notes/secrets (never intended for upstream) — see CLAUDE.md
 .env.local
+
+# Claude Code worktrees (full checkouts, never commit)
+.claude/worktrees/
