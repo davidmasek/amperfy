@@ -163,6 +163,69 @@ Tried or deliberately skipped:
     the test runner for an Accessibility permission.
   - Xcode raises the project's `objectVersion` from 54 to 70. Never commit that in an upstream PR.
 
+## Test servers (API probes with `curl`)
+
+Probe what a server really returns before changing URL generation in `AmperfyKit/Api`.
+Compare `Content-Type`, byte count and `ffprobe -show_entries format=bit_rate -of csv=p=0`
+of the saved body. Wait a few seconds between Ampache requests: rapid ones get HTTP 429.
+
+### Subsonic: Navidrome from `.env.local`
+
+```
+set -a; . ./.env.local; set +a
+Q="u=$NAVIDROME_USER&p=$NAVIDROME_PASSWORD&v=1.13.0&c=probe"   # v matches what Amperfy sends
+curl -s "$NAVIDROME_URL/rest/getRandomSongs?$Q&f=json&size=500"            # pick a song id, e.g. suffix flac
+curl -s -o out.bin -D h.txt "$NAVIDROME_URL/rest/stream?$Q&id=<song id>&format=mp3&maxBitRate=128"
+```
+
+`download` takes only `id` and returns the original file. `format=raw` beats `maxBitRate`.
+`stream&maxBitRate=…` without `format` lets the server pick the codec (Navidrome 0.61: Ogg).
+
+### Ampache: official image, local container
+
+1. **Docker**: `open -a Docker`, then wait until `docker info` succeeds.
+2. **Test files**, in a scratch dir (3 FLACs of 30 s):
+   ```
+   for i in 1 2 3; do ffmpeg -y -f lavfi -i "anoisesrc=d=30:c=pink:r=44100:a=0.3" \
+     -metadata title="Probe Track $i" -metadata artist="Probe Artist" -metadata album="Probe Album" \
+     -c:a flac <scratch>/music/track$i.flac; done
+   ```
+3. **Run** the pinned image (`ampache/ampache` on Docker Hub, source `github.com/ampache/ampache-docker`).
+   `DB_HOST` and `DB_NAME` are required for the automated install. Keep the admin password in a
+   scratch file, not in a tracked file:
+   ```
+   docker run -d --name ampache-probe -p 8081:80 -v <scratch>/music:/media:ro \
+     -e MYSQL_PASS=probedb -e DB_PASSWORD=probedb -e AMPACHE_DB_PASSWORD=probedb \
+     -e DB_HOST=localhost -e DB_NAME=ampache \
+     -e AMPACHE_ADMIN_USER=probe -e AMPACHE_ADMIN_EMAIL=probe@example.com \
+     -e AMPACHE_ADMIN_PASSWORD="$(cat <scratch>/adminpw)" ampache/ampache:8.3.0
+   ```
+   Wait about 60 s for the install to finish.
+4. **Catalog**:
+   ```
+   docker exec ampache-probe php /var/www/bin/cli run:addCatalog probe /media
+   docker exec ampache-probe php /var/www/bin/cli run:updateCatalog -a probe
+   ```
+5. **Enable transcoding**, off by default (without it `format` and `bitrate` are ignored and the
+   original file is returned). Lost when the container is removed:
+   ```
+   docker exec ampache-probe sed -i 's/^;transcode_cmd = "ffmpeg"/transcode_cmd = "ffmpeg"/;s/^;transcode_flac = "allowed"/transcode_flac = "required"/' /var/www/config/ampache.cfg.php
+   ```
+6. **Handshake**, auth is `sha256(timestamp + sha256(password))`; the response's `auth` is the token:
+   ```
+   TS=$(date +%s); H=$(printf %s "$(cat <scratch>/adminpw)" | shasum -a 256 | cut -d' ' -f1)
+   AUTH=$(printf %s "$TS$H" | shasum -a 256 | cut -d' ' -f1)
+   curl -s "http://localhost:8081/server/json.server.php?action=handshake&auth=$AUTH&timestamp=$TS&version=500000&user=probe"
+   curl -s -L -o out.bin -D h.txt "http://localhost:8081/server/json.server.php?auth=<token>&version=500000&type=song&id=1&action=stream&format=mp3&bitrate=128000"
+   ```
+   `stream` answers with a 302 to `play/index.php`; pass `-L`.
+7. **Stop**: `docker rm -f ampache-probe`.
+
+Ampache 8.3.0 behaviour, tested with the setup above:
+- `bitrate` is in bits per second (`64000`). Values like `64` or `192` are ignored (server default 128 kbps).
+- `stream` honours `bitrate`; `download` ignores it (it honours `format`).
+- `download` or `stream` without a transcode config returns the original file for any `format`.
+
 ## Running tests / benchmarks on a physical iPhone
 
 1. **Throwaway branch** off the branch under test: `git checkout -b bench/<name> <base>`.
