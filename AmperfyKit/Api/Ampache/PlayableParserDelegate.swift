@@ -85,6 +85,8 @@ class PlayableParserDelegate: AmpacheXmlLibParser {
       playableBuffer?.size = Int(buffer) ?? 0
     case "bitrate":
       playableBuffer?.bitrate = Int(buffer) ?? 0
+    case "rate":
+      playableBuffer?.sampleRate = Int(buffer) ?? 0
     case "mime":
       playableBuffer?.contentType = buffer
     case "disk":

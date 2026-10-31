@@ -29,6 +29,8 @@ extension AbstractPlayableMO {
   }
 
   @NSManaged
+  public var bitDepth: Int32
+  @NSManaged
   public var bitrate: Int32
   @NSManaged
   public var contentType: String?
@@ -38,6 +40,8 @@ extension AbstractPlayableMO {
   public var disk: String?
   @NSManaged
   public var relFilePath: String?
+  @NSManaged
+  public var sampleRate: Int32
   @NSManaged
   public var combinedDuration: Int16
   @NSManaged
