@@ -98,10 +98,51 @@ The simulator is sandboxed and needs no macOS permissions. Look up `<sim id>` wi
    3. In-app "Notifications" notice: `idb ui tap "Close"`.
    4. System notification permission: `idb ui tap "Don’t Allow"` (curly apostrophe).
 7. **Open Settings**: tap the profile icon at `38 83` (no label), then `idb ui tap "Settings"`.
-8. **Shut down**: `xcrun simctl shutdown <sim id>`
+8. **Shut down**: `xcrun simctl terminate <sim id> <bundle id>; xcrun simctl shutdown <sim id>`.
+   Terminate first: a playing app keeps sounding until it is stopped.
 
 Screenshots of the filled login form or the account menu show the server host and username:
 don't attach them to a PR.
+
+### Playing music in the simulator without sound
+
+Simulator audio comes out of the Mac's speakers and `simctl` has no mute. Set the app's own
+player volume to 0 before the first playback; the player still plays and the progress advances.
+Don't press play before step 4 confirms the slider is at 0.
+
+1. **Look up the app container** while the simulator is booted (the lookup fails with
+   "Unable to lookup in current state: Shutdown" otherwise):
+   `C=$(xcrun simctl get_app_container <sim id> <bundle id> data)`
+2. **Shut down**, so `cfprefsd` can't serve the old volume from memory (editing the plist
+   under a booted simulator is ignored): `xcrun simctl terminate <sim id> <bundle id>; xcrun simctl shutdown <sim id>`
+3. **Set the volume to 0**, then boot and launch (settings are a JSON blob under `settings.user`):
+   ```
+   python3 -I - "$C/Library/Preferences/<bundle id>.plist" <<'EOF'
+   import sys, plistlib, json
+   p = sys.argv[1]
+   d = plistlib.load(open(p, 'rb'))
+   u = json.loads(d['settings.user']); u['_playerVolume'] = 0
+   d['settings.user'] = json.dumps(u, separators=(',', ':')).encode()
+   plistlib.dump(d, open(p, 'wb'), fmt=plistlib.FMT_BINARY)
+   EOF
+   xcrun simctl boot <sim id>; sleep 8; xcrun simctl launch <sim id> <bundle id>
+   ```
+4. **Confirm silently**: the app restores its last queue paused, so
+   `idb ui tap 150 755` (mini player) opens the full player, `idb ui tap "Volume Higher"` opens
+   the volume slider, then screenshot. The knob must be at the far left. A fresh install has no
+   queue to restore, so the slider can't be read before the first playback: do steps 1-3 right
+   after logging in, then ask the user before the first play (untested on a fresh install,
+   including whether `settings.user` exists in the plist by then).
+5. **Play**: `idb ui tap 100 220` opens the first Random Album on Home, `idb ui tap "Play"`
+   starts it, `idb ui tap 150 755` opens the full player. Close the volume popup with
+   `idb ui tap "dismiss popup"`, close the player with `idb ui swipe 200 70 200 700 --duration 0.4`.
+6. **Read the player**: `idb ui describe-all --udid <sim id> --format complete | grep -oE '"label":"[^"]*"'`
+   shows the elapsed/remaining time (`0:04`, `-0:21`) and the audio info label (`MP3 320 kbps`).
+   Two reads a few seconds apart show whether it is playing. Pause with `idb ui tap "pause"`.
+
+Other taps that work: `idb ui tap "Resync Library"` (Settings > Account, after
+`idb ui swipe 200 600 200 150 --duration 0.4`) opens a confirmation; `idb ui tap "Resync"` hits
+the row behind it, so confirm with `idb ui tap 275 537`. Resync clears only the local library.
 
 ### Mac Catalyst UI automation: not working
 
