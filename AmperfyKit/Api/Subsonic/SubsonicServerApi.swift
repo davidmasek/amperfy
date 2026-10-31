@@ -327,30 +327,39 @@ final class SubsonicServerApi: URLCleanser, Sendable {
     }
   }
 
+  /// `download` returns the original file and takes no format or bitrate.
+  /// Transcoding (and so a bitrate cap) needs `stream`.
+  static func downloadAction(
+    format: CacheTranscodingFormatPreference,
+    maxBitrate: CacheMaxBitratePreference
+  )
+    -> (action: String, queryItems: [URLQueryItem]) {
+    var items = [URLQueryItem]()
+    switch format {
+    case .raw:
+      return ("download", items)
+    case .mp3:
+      items.append(URLQueryItem(name: "format", value: "mp3"))
+    case .serverConfig:
+      break // let the server decide which format to use
+    }
+    if maxBitrate != .noLimit {
+      items.append(URLQueryItem(name: "maxBitRate", value: String(maxBitrate.rawValue)))
+    }
+    return ("stream", items)
+  }
+
   public func generateUrl(forDownloadingPlayableId apiId: String) async throws -> URL {
     let version = try await determineApiVersionToUse()
-    // If transcoding is selected for caching the subsonic API method 'stream' must be used
-    // For raw format subsonic API method 'download' can be used
-    switch settings.user.cacheTranscodingFormatPreference {
-    case .mp3:
-      var urlComp = try createAuthApiUrlComponent(version: version, forAction: "stream", id: apiId)
-      urlComp.addQueryItem(name: "format", value: "mp3")
-      let url = try createUrl(from: urlComp)
-      return url
-    case .serverConfig:
-      let urlComp = try createAuthApiUrlComponent(version: version, forAction: "stream", id: apiId)
-      // let the server decide which format to use
-      let url = try createUrl(from: urlComp)
-      return url
-    case .raw:
-      let urlComp = try createAuthApiUrlComponent(
-        version: version,
-        forAction: "download",
-        id: apiId
-      )
-      let url = try createUrl(from: urlComp)
-      return url
+    let (action, items) = Self.downloadAction(
+      format: settings.user.cacheTranscodingFormatPreference,
+      maxBitrate: settings.user.cacheMaxBitratePreference
+    )
+    var urlComp = try createAuthApiUrlComponent(version: version, forAction: action, id: apiId)
+    for item in items {
+      urlComp.addQueryItem(name: item.name, value: item.value ?? "")
     }
+    return try createUrl(from: urlComp)
   }
 
   public func generateUrl(

@@ -771,19 +771,45 @@ final class AmpacheXmlServerApi: URLCleanser, Sendable {
     try await reauthenticate()
   }
 
+  /// Ampache's `download` ignores `bitrate`; only `stream` honours it, in bits per second.
+  /// A capped mp3 is therefore requested via `stream`, which the server counts as a play.
+  static func downloadQueryItems(
+    format: CacheTranscodingFormatPreference,
+    maxBitrate: CacheMaxBitratePreference
+  )
+    -> [URLQueryItem] {
+    switch format {
+    case .mp3 where maxBitrate != .noLimit:
+      return [
+        URLQueryItem(name: "action", value: "stream"),
+        URLQueryItem(name: "format", value: "mp3"),
+        URLQueryItem(name: "bitrate", value: String(maxBitrate.rawValue * 1000)),
+      ]
+    case .mp3:
+      return [
+        URLQueryItem(name: "action", value: "download"),
+        URLQueryItem(name: "format", value: "mp3"),
+      ]
+    default:
+      return [
+        URLQueryItem(name: "action", value: "download"),
+        URLQueryItem(name: "format", value: "raw"),
+      ]
+    }
+  }
+
   public func generateUrlForDownloadingPlayable(isSong: Bool, id: String) async throws -> URL {
     let auth = try await reauthenticate()
 
     var urlComp = try createAuthApiUrlComponent(auth: auth)
-    urlComp.addQueryItem(name: "action", value: "download")
+    for item in Self.downloadQueryItems(
+      format: settings.user.cacheTranscodingFormatPreference,
+      maxBitrate: settings.user.cacheMaxBitratePreference
+    ) {
+      urlComp.addQueryItem(name: item.name, value: item.value ?? "")
+    }
     urlComp.addQueryItem(name: "type", value: isSong ? "song" : "podcast_episode")
     urlComp.addQueryItem(name: "id", value: id)
-    switch settings.user.cacheTranscodingFormatPreference {
-    case .mp3:
-      urlComp.addQueryItem(name: "format", value: "mp3")
-    default:
-      urlComp.addQueryItem(name: "format", value: "raw")
-    }
     return try createUrl(from: urlComp)
   }
 
