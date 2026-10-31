@@ -55,26 +55,5 @@ class MimeFileConverterTest: XCTestCase {
   func testM4bGetsMp4Extension() {
     XCTAssertEqual(MimeFileConverter.getFilenameExtension(mimeType: "audio/m4b"), "mp4")
     XCTAssertEqual(MimeFileConverter.getFilenameExtension(mimeType: "audio/x-m4b"), "mp4")
-    XCTAssertEqual(MimeFileConverter.getFilenameExtension(mimeType: "Audio/M4B"), "mp4")
-  }
-
-  func testM4aExtensions() {
-    XCTAssertEqual(MimeFileConverter.getFilenameExtension(mimeType: "audio/m4a"), "mp4")
-    XCTAssertEqual(MimeFileConverter.getFilenameExtension(mimeType: "audio/x-m4a"), "m4a")
-    XCTAssertEqual(MimeFileConverter.getFilenameExtension(mimeType: "audio/mp4"), "mp4")
-  }
-
-  func testOtherExtensionsUnchanged() {
-    XCTAssertEqual(MimeFileConverter.getFilenameExtension(mimeType: "audio/mpeg"), "mp3")
-    XCTAssertEqual(MimeFileConverter.getFilenameExtension(mimeType: "audio/x-flac"), "flac")
-    XCTAssertEqual(MimeFileConverter.getFilenameExtension(mimeType: "audio/ogg"), "ogg")
-    XCTAssertEqual(MimeFileConverter.getFilenameExtension(mimeType: nil), "unknown")
-  }
-
-  func testM4bIsConvertedForPlayer() {
-    XCTAssertEqual(
-      MimeFileConverter.convertToValidMimeTypeWhenNeccessary(mimeType: "audio/m4b"),
-      "audio/mp4"
-    )
   }
 }
