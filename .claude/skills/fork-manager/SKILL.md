@@ -84,16 +84,24 @@ section and the snapshot's "Open fork issues" are what change.
      `git worktree remove <path>`, `git branch -d <branch>` (`-D` if its fork PR was
      closed unmerged), `git push origin --delete <branch>`.
    - open a fork PR for a branch that has none
-   - merge a fork PR into `master`: `gh pr merge <n> -R davidmasek/amperfy --merge`.
-     Never squash: upstream-bound branches are cherry-picked from these commits.
+   - merge a fork PR into `master`: `gh pr merge <n> -R davidmasek/amperfy --rebase`,
+     keeping `master` linear. Never squash: upstream-bound branches are cherry-picked
+     from these commits.
+   - sync `master` with upstream by rebasing: CLAUDE.md "Syncing `master` with upstream".
+     Ask once more right before the force-push of `master` (step 4), showing the new
+     `git log --oneline upstream/master..rebase/master-<date>`.
    - drop a stash entry (stashes are shared by all worktrees and sessions): right before
      dropping, look up its current index with `git stash list --format='%gd %H %gs'`,
      then `git stash drop 'stash@{<n>}'` and check the SHA it prints. `drop <sha>` fails
      with "is not a stash reference".
    - start a worker (see Workers)
    - change CLAUDE.md, this skill or other agent setup: on a branch, as a fork PR
-3. **Never, even if approved in passing:** push directly to `master` (it changes only by
-   merging a fork PR), force-push, or anything on `BLeeEZ/amperfy` without CLAUDE.md's explicit per-PR approval.
+3. **Upstream (`BLeeEZ/amperfy`): only with explicit approval of that one item, given at
+   the time** (CLAUDE.md "PRs — hard rule"): each PR, issue, comment or review there. A
+   general approval or one from earlier in the run does not count.
+
+Force-pushing your own branches is fine. `master` changes only by merging a fork PR or by
+the upstream sync above; never push other commits to it directly.
 
 After acting, report what you did. The user approves the result; follow-ups become
 issues or wait for the next run.
