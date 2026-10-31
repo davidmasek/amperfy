@@ -15,8 +15,9 @@ yourself.
 - Recommend one action per open item, with the reason in one clause. "Needs a decision"
   alone is not a recommendation.
 - Terse. Every report line is a fact the user needs or a decision they make.
-- All state lives on GitHub: PRs, labels, issues, the log issue. Keep no local files
-  between runs.
+- All state lives in the fork itself: branches, PRs, labels, issues. Keep no files
+  between runs. A decision that changes nothing yet (e.g. "keep this branch for now")
+  goes on the branch's PR as `status: parked` plus a line in its description.
 - CLAUDE.md's hard rules apply: nothing upstream without per-item approval, no AI
   attribution anywhere.
 - Never edit files in, or remove, another session's worktree. Report it instead.
@@ -67,7 +68,6 @@ section and the snapshot's "Open fork issues" are what change.
 
 1. **Without approval:**
    - report
-   - comment on the log issue (see Procedure)
    - fast-forward the mirror:
      `git push origin upstream/master:refs/heads/upstream-master` (refused if diverged:
      report that instead)
@@ -88,27 +88,20 @@ issues or wait for the next run.
 
 ## Procedure
 
-1. Run `.claude/skills/fork-manager/snapshot.sh` and read its output. "Last run" gives
-   the date of the previous run; compare it with each item's updated date for "since
-   last run".
-2. Read the log issue's last comment for pending questions and earlier decisions.
-3. For an open upstream PR with a new comment by someone else, read the thread:
+1. Run `.claude/skills/fork-manager/snapshot.sh` and read its output.
+2. For an open upstream PR with a new comment by someone else, read the thread:
    `gh pr view <n> --repo BLeeEZ/amperfy --comments`.
-4. Fast-forward the mirror if the snapshot says it is behind.
-5. Write the report (format below).
-6. Ask which proposed actions to do: one `AskUserQuestion`, multiSelect, one option per
+3. Fast-forward the mirror if the snapshot says it is behind.
+4. Write the report (format below).
+5. Ask which proposed actions to do: one `AskUserQuestion`, multiSelect, one option per
    action (split into several questions if there are more than 4).
-7. Do the approved ones and report each outcome.
-8. Comment on the log issue: date, what changed, what the user decided, what you did,
-   open questions. No server URLs, usernames or anything from `.env.local`; the fork is
-   public.
+6. Do the approved ones and report each outcome. Record decisions that change nothing
+   yet on the PR concerned (see Stance).
 
 ## Report format
 
 ```
 ## Fork status <date>
-**Since last run:** <changes, or "first run">
-
 **Needs you**
 1. <item>: <recommended action>, because <reason>
 

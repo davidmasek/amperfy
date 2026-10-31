@@ -35,15 +35,6 @@ up_prs_for() {
 
 echo "# Fork snapshot $(date '+%Y-%m-%d %H:%M')"
 
-echo
-echo "## Last run"
-log=$(gh issue list --repo "$FORK" --label fork-manager-log --state open --json number --jq '.[0].number // empty')
-if [ -z "$log" ]; then
-  echo "NO LOG ISSUE (label fork-manager-log)"
-else
-  last=$(gh issue view "$log" --repo "$FORK" --json comments --jq '.comments | last | .createdAt // empty')
-  echo "log issue #$log, last run: ${last:-none}"
-fi
 
 echo
 echo "## origin/master vs upstream/master"
@@ -121,7 +112,7 @@ done
 
 echo
 echo "## Open fork issues"
-jq -r 'map(select(any(.labels[]; .name == "fork-manager-log") | not)) | sort_by(-.number)[]
+jq -r 'sort_by(-.number)[]
   | "#\(.number) [\([.labels[].name] | join(","))] \(.title) (updated \(.updatedAt[:10]))\(if (.closedByPullRequestsReferences | length) > 0 then " — linked PR " + ([.closedByPullRequestsReferences[] | "#\(.number)"] | join(",")) else "" end)"' \
   "$tmp/fork_issues.json"
 
