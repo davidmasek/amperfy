@@ -9,6 +9,15 @@ learning iOS dev and for preparing PRs back upstream.
 - `origin` → your fork, push here. **Default PR target — see hard rule below.**
 - `upstream` → `BLeeEZ/amperfy`, pull-only. Never push here.
 
+`master` on `origin` rejects deletion and force-pushes (ruleset `protect-master`, id
+`26285628`, no bypass). To force-push or delete it anyway, disable the ruleset, push, then
+re-enable it:
+```
+gh api -X PUT repos/davidmasek/amperfy/rulesets/26285628 -f enforcement=disabled
+gh api -X PUT repos/davidmasek/amperfy/rulesets/26285628 -f enforcement=active
+```
+Inspect it with `gh api repos/davidmasek/amperfy/rulesets/26285628`.
+
 ## PRs — hard rule
 
 **Every PR defaults to `origin` (this fork) only.** Never open a PR against `upstream`
