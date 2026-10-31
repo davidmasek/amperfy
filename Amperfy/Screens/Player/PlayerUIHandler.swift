@@ -531,7 +531,8 @@ class PlayerUIHandler: NSObject {
 
     if playType == .cache {
       playTypeIcon.image = UIImage.cache
-      displayBitrateInKbps = currentlyPlaying.bitrate / 1000
+      let bitrate = currentlyPlaying.cachedFileBitrate ?? currentlyPlaying.bitrate
+      displayBitrateInKbps = bitrate / 1000
       formatText = getFormat(contentType: currentlyPlaying.fileContentType)
     } else {
       playTypeIcon.image = UIImage.antenna
