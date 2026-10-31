@@ -133,7 +133,7 @@ echo
 echo "## My open upstream issues"
 gh issue list --repo "$UPSTREAM" --author "$ME" --state open --limit 50 \
   --json number,title,updatedAt,comments \
-  --jq '.[] | "  #\(.number) \(.title) (\(.comments | length) comments, updated \(.updatedAt[:10]))"'
+  --jq '.[] | "  #\(.number) \(.title) (\(.comments | length) comments, updated \(.updatedAt[:10]))\(if (.comments | length) > 0 then ", last comment: \(.comments[-1].author.login) \(.comments[-1].createdAt[:10])" else "" end)"'
 
 echo
 echo "## Upstream items referenced from open fork PRs and issues"
