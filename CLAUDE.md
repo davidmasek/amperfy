@@ -225,6 +225,8 @@ Ampache 8.3.0 behaviour, tested with the setup above:
 - `bitrate` is in bits per second (`64000`). Values like `64` or `192` are ignored (server default 128 kbps).
 - `stream` honours `bitrate`; `download` ignores it (it honours `format`).
 - `download` or `stream` without a transcode config returns the original file for any `format`.
+- `stream` counts a play (`playcount` in `action=song`), `download` does not. `stats=0` does not prevent it:
+  the server drops it from the redirect. Repeated `stream` requests for one song count once.
 
 ## Running tests / benchmarks on a physical iPhone
 
