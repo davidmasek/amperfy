@@ -493,6 +493,8 @@ class PlayerUIHandler: NSObject {
     audioInfoLabel.isHidden = false
     var displayBitrateInKbps = 0
     var formatText = ""
+    // sample rate and bit depth describe the original file only, not a transcoded or resampled one
+    var isOriginalFile = false
 
     func getFormat(contentType: String?) -> String {
       guard let contentType else { return "" }
@@ -522,6 +524,7 @@ class PlayerUIHandler: NSObject {
       playTypeIcon.image = UIImage.cache
       displayBitrateInKbps = currentlyPlaying.bitrate / 1000
       formatText = getFormat(contentType: currentlyPlaying.fileContentType)
+      isOriginalFile = currentlyPlaying.contentTypeTranscoded == nil
     } else {
       playTypeIcon.image = UIImage.antenna
       let streamingBitrate = player.activeStreamingBitrate
@@ -529,8 +532,11 @@ class PlayerUIHandler: NSObject {
         if streamingBitrate == .noLimit ||
           (streamingBitrate.rawValue > (currentlyPlaying.bitrate / 1000)) {
           displayBitrateInKbps = currentlyPlaying.bitrate / 1000
+          isOriginalFile = true
         } else {
           displayBitrateInKbps = streamingBitrate.rawValue
+          // a cap equal to the file's bitrate does not change the stream
+          isOriginalFile = streamingBitrate.rawValue >= (currentlyPlaying.bitrate / 1000)
         }
       } else {
         displayBitrateInKbps = 0
@@ -543,15 +549,33 @@ class PlayerUIHandler: NSObject {
           formatText = getFormat(contentType: currentlyPlaying.contentType)
         } else {
           formatText = transcodingFormat.shortInfo
+          isOriginalFile = false
         }
       } else {
         formatText = ""
       }
     }
 
-    audioInfoLabel
-      .text = (displayBitrateInKbps > 0) ? "\(formatText) \(displayBitrateInKbps) kbps" :
-      "\(formatText)"
+    // e.g. "24/96" (bit depth / sample rate in kHz), "44.1 kHz" or "24-bit"
+    var qualityText = ""
+    if isOriginalFile {
+      let sampleRateInKHz = String(format: "%g", Double(currentlyPlaying.sampleRate) / 1000)
+      let bitDepth = currentlyPlaying.bitDepth
+      if bitDepth > 0, currentlyPlaying.sampleRate > 0 {
+        qualityText = "\(bitDepth)/\(sampleRateInKHz)"
+      } else if currentlyPlaying.sampleRate > 0 {
+        qualityText = "\(sampleRateInKHz) kHz"
+      } else if bitDepth > 0 {
+        qualityText = "\(bitDepth)-bit"
+      }
+    }
+
+    var infoText = [formatText, qualityText].filter { !$0.isEmpty }.joined(separator: " ")
+    if displayBitrateInKbps > 0 {
+      infoText += qualityText.isEmpty ? " \(displayBitrateInKbps) kbps" :
+        " · \(displayBitrateInKbps) kbps"
+    }
+    audioInfoLabel.text = infoText
     playTypeIcon.tintColor = .labelColor
   }
 }
