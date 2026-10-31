@@ -4,6 +4,10 @@ This is `davidmasek/amperfy`, a fork of [BLeeEZ/amperfy](https://github.com/BLee
 (iOS/iPadOS/macOS Swift client for Ampache/Subsonic servers, GPLv3). Used both for
 learning iOS dev and for preparing PRs back upstream.
 
+When the user states a lasting rule or preference for this repo, add it to this file, in
+the section it applies to, in the same session: not to Claude's memory, which is
+untracked and hard to audit. Memory is for short-lived state of work in progress.
+
 ## Remotes
 
 - `origin` → your fork, push here. **Default PR target — see hard rule below.**
@@ -49,6 +53,16 @@ of requiring the branch to have been based there from the start.
 Build and test from the `master`-based branch (its PR goes to `origin` for review). Create
 the upstream branch afterwards by cherry-picking onto `upstream/master`; that branch can't
 build for Mac Catalyst (see "Running the app on the Mac").
+
+Every branch you push gets a fork PR (draft while in progress) whose description says what
+the branch is for, with exactly one `status:` label: `status: wip`, `parked`, `fork-only`,
+`upstreaming`, `done` or `dropped` (`gh label list --search status` shows what each means).
+Add it with `gh pr create ... --label "status: wip"`. A cherry-picked upstream branch's
+fork PR targets `upstream-master` (the fork's mirror of `upstream/master`), links the
+original branch's PR, and is never merged.
+
+Rebase or merge to update a branch, whichever is simpler. Force-pushing your own branches
+is fine; `master` is protected (see "Remotes").
 
 Keep your fork's `master` in sync periodically: `git fetch upstream && git merge upstream/master`.
 
