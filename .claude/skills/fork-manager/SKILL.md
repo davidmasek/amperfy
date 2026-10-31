@@ -89,33 +89,54 @@ issues or wait for the next run.
 ## Procedure
 
 1. Run `.claude/skills/fork-manager/snapshot.sh` and read its output.
-2. For an open upstream PR with a new comment by someone else, read the thread:
-   `gh pr view <n> --repo BLeeEZ/amperfy --comments`.
+2. For an open upstream PR or issue whose last comment is by someone else, read the
+   thread: `gh pr view <n> --repo BLeeEZ/amperfy --comments` (or `gh issue view`). A
+   thread whose last comment is the user's needs nothing.
 3. Fast-forward the mirror if the snapshot says it is behind.
-4. Write the report (format below).
-5. Ask which proposed actions to do: one `AskUserQuestion`, multiSelect, one option per
-   action (split into several questions if there are more than 4).
+4. Write the overview (format below) and stop. Don't ask for approvals yet.
+5. The user picks items. For a picked item, show its details and ask about its actions
+   only: one `AskUserQuestion`, multiSelect, one option per action. A Routine item can be
+   approved as a whole straight from the overview.
 6. Do the approved ones and report each outcome. Record decisions that change nothing
    yet on the PR concerned (see Stance).
 
-## Report format
+`gh` in this checkout may default to `BLeeEZ/amperfy`: pass `-R davidmasek/amperfy` to
+every fork `gh` call, written out (zsh doesn't word-split `$R`).
+
+## Overview format
+
+At most about 6 numbered items, grouped. Each item must make sense to someone who has
+forgotten the details: say what the thing is in plain words ("cache bitrate cap", not
+"#12 vs sample-rate"), then the recommendation in one clause.
 
 ```
 ## Fork status <date>
-**Needs you**
-1. <item>: <recommended action>, because <reason>
+**Needs your review** (decisions, or things worth looking at)
+1. <what it is>: <recommended action>, because <reason>
 
-**Housekeeping** (labels, closing, deleting)
-- <action>: <reason>
+**Routine** (done on a yes, nothing is lost)
+2. <one kind of action>: <count and what it covers>
 
-**Upstream sync:** origin/master N behind / M ahead upstream.
-<files changed on both sides that fork features own; recommend merging now or when>
-
-**Upstream PRs and issues:** <only changes or new comments>
-
-**Worker tasks proposed**
-<per task: one-line goal; brief is written out when approved>
+**Later**
+3. <item>: <when, and why not now>
 ```
+
+- **Needs your review**: choices, and actions whose result the user should look at
+  (e.g. a new fork PR they'll read before anything goes upstream).
+- **Routine**: actions needing no thought. Labels that follow from the facts, closing
+  finished PRs, deleting branches whose work is merged or identical elsewhere, removing
+  `ai-reported` from an issue a PR reproduced. Group by kind of action (one item for all
+  PR and issue labels, one for all deletions), not by where the fact came from.
+- **Later**: recommended, but not now, e.g. an upstream sync while several branches are
+  in flight.
+- Leave out what needs nothing: upstream threads the user answered last, branches under
+  a day old in an active worktree.
+- If the user has said something isn't a priority, propose `status: parked` with their
+  reason, as Routine, instead of asking them to decide it.
+
+Details for a picked item: the facts behind it (branches, PRs, commits, files), what
+each action does, and what was checked ("no unpushed commits", "patch-identical to
+master").
 
 ## Workers
 
