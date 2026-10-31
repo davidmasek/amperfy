@@ -74,6 +74,9 @@ issues or a new run.
 
 ## State
 
+Run from the main checkout (`/Users/david/Desktop/amperfy-local`). A worktree-isolated
+session, such as a background job, is refused writes to the ledger.
+
 The ledger lives in `"$(git rev-parse --git-common-dir)/fork-manager/"`, shared by all
 worktrees and never committed:
 - `LEDGER.md`: notes git and GitHub can't hold: ignored origin branches, pending
