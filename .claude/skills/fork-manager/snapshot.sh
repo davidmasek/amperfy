@@ -38,7 +38,7 @@ echo "# Fork snapshot $(date '+%Y-%m-%d %H:%M')"
 
 echo
 echo "## origin/master vs upstream/master"
-read -r behind ahead < <(git rev-list --left-right --count upstream/master...origin/master)
+read -r behind ahead < <(git rev-list --left-right --count --no-merges upstream/master...origin/master)
 read -r ob oa < <(git rev-list --left-right --count origin/master...master)
 echo "origin/master: $behind behind, $ahead ahead upstream/master"
 echo "local master: $ob behind, $oa ahead origin/master"

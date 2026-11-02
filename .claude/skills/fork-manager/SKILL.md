@@ -87,9 +87,11 @@ section and the snapshot's "Open fork issues" are what change.
    - merge a fork PR into `master`: `gh pr merge <n> -R davidmasek/amperfy --rebase`,
      keeping `master` linear. Never squash: upstream-bound branches are cherry-picked
      from these commits.
-   - sync `master` with upstream by rebasing: CLAUDE.md "Syncing `master` with upstream".
-     Ask once more right before the force-push of `master` (step 4), showing the new
-     `git log --oneline upstream/master..rebase/master-<date>`.
+   - sync `master` with upstream by merging: CLAUDE.md "Syncing `master` with upstream".
+     Recommend it as Routine whenever `master` is behind upstream.
+   - squash `master`'s dev commits: CLAUDE.md "Squashing `master`'s dev commits". Ask
+     once more right before the force-push of `master` (step 5), showing the new
+     `git log --oneline upstream/master..squash/master-<date>`.
    - drop a stash entry (stashes are shared by all worktrees and sessions): right before
      dropping, look up its current index with `git stash list --format='%gd %H %gs'`,
      then `git stash drop 'stash@{<n>}'` and check the SHA it prints. `drop <sha>` fails
@@ -100,8 +102,9 @@ section and the snapshot's "Open fork issues" are what change.
    the time** (CLAUDE.md "PRs — hard rule"): each PR, issue, comment or review there. A
    general approval or one from earlier in the run does not count.
 
-Force-pushing your own branches is fine. `master` changes only by merging a fork PR or by
-the upstream sync above; never push other commits to it directly.
+Force-pushing your own branches is fine. `master` changes only by merging a fork PR, by
+the upstream sync or by the squash above; never push other commits to it directly. Flag
+any app change (outside the dev setup CLAUDE.md lists) found on `master`.
 
 After acting, report what you did. The user approves the result; follow-ups become
 issues or wait for the next run.
@@ -145,10 +148,11 @@ forgotten the details: say what the thing is in plain words ("cache bitrate cap"
   (e.g. a new fork PR they'll read before anything goes upstream).
 - **Routine**: actions needing no thought. Labels that follow from the facts, closing
   finished PRs, deleting branches whose work is merged or identical elsewhere, removing
-  finished worktrees (`in use: no, merged: yes`, no dirty files), removing `ai-reported` from an issue a PR reproduced. Group by kind of action (one item for all
+  finished worktrees (`in use: no, merged: yes`, no dirty files), removing `ai-reported` from an issue a PR reproduced,
+  syncing `master` with upstream. Group by kind of action (one item for all
   PR and issue labels, one for all deletions), not by where the fact came from.
-- **Later**: recommended, but not now, e.g. an upstream sync while several branches are
-  in flight.
+- **Later**: recommended, but not now, e.g. squashing `master`'s dev commits while several
+  branches are in flight.
 - Leave out what needs nothing: upstream threads the user answered last, branches under
   a day old in an active worktree.
 - If the user has said something isn't a priority, propose `status: parked` with their

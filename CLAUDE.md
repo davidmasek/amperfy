@@ -47,8 +47,8 @@ attribution instruction.
 ## Branching
 
 Branch off your fork's `master` for everything: `git checkout -b my-feature master`. No
-need to juggle two bases — `master`'s local-only additions (this file, `.env.local`,
-whatever signing tweaks Xcode leaves behind) never block a PR, because when a branch is
+need to juggle two bases — `master`'s local-only additions (dev setup only, see "Syncing
+`master` with upstream") never block a PR, because when a branch is
 ready to go upstream, diff or cherry-pick just the relevant commits against
 `upstream/master` at that point (`git diff upstream/master...my-feature`, or
 `git rebase --onto upstream/master <fork-point> my-feature` for a clean PR branch) instead
@@ -70,20 +70,46 @@ is fine; `master` is protected (see "Remotes").
 
 ### Syncing `master` with upstream
 
-`master` is `upstream/master` plus the fork's own commits on top: `git log --oneline
-upstream/master..master` lists exactly what the fork adds. Sync by rebasing, never by merging:
+`master` is `upstream/master` plus dev setup only: this file, `.claude/`, `.env.local.example`,
+`.gitignore` entries, signing (`Amperfy.entitlements`, `DEVELOPMENT_TEAM` and
+`PRODUCT_BUNDLE_IDENTIFIER` in `project.pbxproj`) and the "Amperfy Local" branding
+(`Info.plist`, `AmperfyAppIcon.icon/icon.json`). App changes live on branches, never on
+`master`. `git log --oneline --no-merges upstream/master..master` lists what the fork adds.
 
-1. Tag the old `master` so it can be restored:
-   `git tag master-pre-rebase-<date> origin/master && git push origin master-pre-rebase-<date>`
-2. Rebase a copy: `git fetch upstream && git checkout -b rebase/master-<date> origin/master && git rebase upstream/master`.
-   Drop fork commits that upstream has merged in another form (`git rebase --skip` at that commit).
-3. Run `AmperfyKitTests` on it, then push the branch: `git push origin rebase/master-<date>`.
-4. With the ruleset disabled (see "Remotes"):
-   `git push --force-with-lease=master:<old master sha> origin rebase/master-<date>:master`.
-5. Move each open branch's own commits onto the new `master` and force-push it:
-   `git rebase --onto origin/master <old master sha> <branch> && git push -f origin <branch>`.
+Sync by merging:
+
+1. `git fetch upstream && git checkout -b sync/upstream-<date> origin/master && git merge --no-edit upstream/master`
+2. Run `AmperfyKitTests` on it.
+3. `git push origin sync/upstream-<date>:master` (a fast-forward; if it is refused, `master`
+   moved: fetch and redo step 1), then `git branch -d sync/upstream-<date>`.
+4. In every other checkout: `git checkout master && git pull --ff-only`.
+
+Open branches need nothing. Merge `master` into one only when it needs the upstream changes.
+
+### Squashing `master`'s dev commits
+
+When `git log --oneline --no-merges upstream/master..master` gets long, rebuild `master` as
+`upstream/master` plus one commit per area. Old history is kept only in the tag.
+
+1. Sync first (above), so `master` contains all of `upstream/master`.
+2. `git tag master-pre-squash-<date> origin/master && git push origin master-pre-squash-<date>`
+3. `git checkout -b squash/master-<date> upstream/master`, then one commit each, taking the
+   files with `git checkout origin/master -- <paths>`:
+   - signing: `Amperfy/Amperfy.entitlements Amperfy.xcodeproj/project.pbxproj`.
+     `git diff upstream/master -- Amperfy.xcodeproj/project.pbxproj` must show only the
+     `DEVELOPMENT_TEAM` and `PRODUCT_BUNDLE_IDENTIFIER` lines; re-sorted entries Xcode left
+     behind cause merge conflicts later.
+   - branding: `Amperfy/Info.plist AmperfyKit/Assets/AmperfyAppIcon.icon/icon.json`
+   - dev docs: `CLAUDE.md .env.local.example .gitignore`
+   - agent setup: `.claude/`
+4. `git diff origin/master squash/master-<date>` must print nothing (apart from pbxproj
+   ordering). Run `AmperfyKitTests`.
+5. With the ruleset disabled (see "Remotes"):
+   `git push --force-with-lease=master:<old master sha> origin squash/master-<date>:master`
+6. Move each open `master`-based branch's own commits and force-push it:
+   `git rebase --onto origin/master $(git merge-base <branch> <old master sha>) <branch> && git push -f origin <branch>`.
    Branches based on `upstream-master` are unaffected.
-6. In every other checkout: `git checkout master && git reset --hard origin/master`
+7. In every other checkout: `git checkout master && git reset --hard origin/master`
    (check `git status` is clean first).
 
 ## Secrets
