@@ -107,8 +107,22 @@ echo
 echo "## Worktrees"
 git worktree list --porcelain | awk '/^worktree /{print $2}' | while read -r w; do
   n=$(git -C "$w" status --porcelain 2>/dev/null | wc -l | tr -d ' ')
-  echo "  $w ($(git -C "$w" branch --show-current 2>/dev/null)) dirty files: $n"
+  b=$(git -C "$w" branch --show-current 2>/dev/null)
+  # in use: a process (Claude session, shell, Xcode) has its working directory inside it
+  if lsof -a -d cwd -Fn 2>/dev/null | grep -qE "^n$w(/|$)"; then use=yes; else use=no; fi
+  # merged: every commit has a patch-identical one in origin/master, or its fork PR is closed
+  merged=-
+  if [ -n "$b" ] && [ "$b" != master ]; then
+    merged=no
+    git cherry origin/master "$b" 2>/dev/null | grep -q '^+' || merged=yes
+    case "$(fork_prs_for "$b")" in "#"[0-9]*" merged"* | "#"[0-9]*" closed"*) merged=yes ;; esac
+  fi
+  echo "  $w ($b) dirty files: $n, in use: $use, merged: $merged"
 done
+
+echo
+echo "## Stashes (shared by all worktrees)"
+git stash list --format='  %gd %cr %gs' | head -20
 
 echo
 echo "## Open fork issues"

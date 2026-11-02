@@ -68,7 +68,23 @@ original branch's PR, and is never merged.
 Rebase or merge to update a branch, whichever is simpler. Force-pushing your own branches
 is fine; `master` is protected (see "Remotes").
 
-Keep your fork's `master` in sync periodically: `git fetch upstream && git merge upstream/master`.
+### Syncing `master` with upstream
+
+`master` is `upstream/master` plus the fork's own commits on top: `git log --oneline
+upstream/master..master` lists exactly what the fork adds. Sync by rebasing, never by merging:
+
+1. Tag the old `master` so it can be restored:
+   `git tag master-pre-rebase-<date> origin/master && git push origin master-pre-rebase-<date>`
+2. Rebase a copy: `git fetch upstream && git checkout -b rebase/master-<date> origin/master && git rebase upstream/master`.
+   Drop fork commits that upstream has merged in another form (`git rebase --skip` at that commit).
+3. Run `AmperfyKitTests` on it, then push the branch: `git push origin rebase/master-<date>`.
+4. With the ruleset disabled (see "Remotes"):
+   `git push --force-with-lease=master:<old master sha> origin rebase/master-<date>:master`.
+5. Move each open branch's own commits onto the new `master` and force-push it:
+   `git rebase --onto origin/master <old master sha> <branch> && git push -f origin <branch>`.
+   Branches based on `upstream-master` are unaffected.
+6. In every other checkout: `git checkout master && git reset --hard origin/master`
+   (check `git status` is clean first).
 
 ## Secrets
 
