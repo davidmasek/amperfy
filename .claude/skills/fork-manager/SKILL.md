@@ -103,8 +103,13 @@ section and the snapshot's "Open fork issues" are what change.
 Force-pushing your own branches is fine. `master` changes only by merging a fork PR or by
 the upstream sync above; never push other commits to it directly.
 
-After acting, report what you did. The user approves the result; follow-ups become
-issues or wait for the next run.
+After acting, report in this order:
+1. **Next actions for you**: numbered, each one concrete (a link to open, a PR to
+   review, a decision with the reply that triggers it, e.g. "say `merge 27`").
+2. **Done**: routine work in one or two lines total, no per-step details. Mention only
+   what the user may need later (e.g. a restore tag).
+
+Follow-ups become issues or wait for the next run.
 
 ## Procedure
 
