@@ -57,3 +57,20 @@ class MimeFileConverterTest: XCTestCase {
     XCTAssertEqual(MimeFileConverter.getFilenameExtension(mimeType: "audio/x-m4b"), "mp4")
   }
 }
+
+// MARK: - LogDataExportTest
+
+@MainActor
+class LogDataExportTest: XCTestCase {
+  func testExportFileIsValidJSON() throws {
+    let logData = LogData.collectInformation(amperfyData: AmperKit.shared)
+    let fileURL = try logData.writeExportFile()
+    defer { try? FileManager.default.removeItem(at: fileURL.deletingLastPathComponent()) }
+
+    XCTAssertEqual(fileURL.lastPathComponent, "AmperfyLog.json")
+    let data = try Data(contentsOf: fileURL)
+    let json = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+    let basicInfo = try XCTUnwrap(json["basicInfo"] as? [String: Any])
+    XCTAssertEqual(basicInfo["appName"] as? String, "Amperfy")
+  }
+}

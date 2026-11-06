@@ -19,8 +19,10 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+import CoreTransferable
 import Foundation
 import UIKit
+import UniformTypeIdentifiers
 
 // MARK: - LogData
 
@@ -92,6 +94,40 @@ public struct LogData: Encodable {
     logData.eventInfo = eventInfo
 
     return logData
+  }
+}
+
+extension LogData {
+  public static let exportFileName = "AmperfyLog.json"
+
+  /// Writes the log as JSON to a new temporary directory and returns the file URL.
+  /// The file is named `exportFileName`, the name the support mail attachment uses.
+  public func writeExportFile() throws -> URL {
+    guard let data = asJSONData() else {
+      throw CocoaError(.fileWriteUnknown)
+    }
+    let directory = FileManager.default.temporaryDirectory
+      .appendingPathComponent(UUID().uuidString, isDirectory: true)
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    let fileURL = directory.appendingPathComponent(Self.exportFileName)
+    try data.write(to: fileURL)
+    return fileURL
+  }
+}
+
+// MARK: - LogExportFile
+
+/// Shares `AmperfyLog.json`. The log is collected when the share sheet asks for the file.
+public struct LogExportFile: Transferable, Sendable {
+  public init() {}
+
+  public static var transferRepresentation: some TransferRepresentation {
+    FileRepresentation(exportedContentType: .json) { _ in
+      let fileURL = try await MainActor.run {
+        try LogData.collectInformation(amperfyData: AmperKit.shared).writeExportFile()
+      }
+      return SentTransferredFile(fileURL)
+    }
   }
 }
 

@@ -64,6 +64,12 @@ struct SupportSettingsView: View {
               )
             }
           }
+          ShareLink(
+            item: LogExportFile(),
+            preview: SharePreview(LogData.exportFileName)
+          ) {
+            Text("Export log")
+          }
         }
 
         SettingsSection {
