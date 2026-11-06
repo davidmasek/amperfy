@@ -58,6 +58,11 @@ Build and test from the `master`-based branch (its PR goes to `origin` for revie
 the upstream branch afterwards by cherry-picking onto `upstream/master`; that branch can't
 build for Mac Catalyst (see "Running the app on the Mac").
 
+"Prepare an upstream PR" means: cherry-pick onto `upstream/master`, push the branch, open its
+fork PR into `upstream-master` with the proposed upstream title and body in its description,
+and give the user that fork PR's link right away. Run `AmperfyKitTests` on it afterwards
+and report the result. Opening the PR on `BLeeEZ/amperfy` still needs the user's approval.
+
 Every branch you push gets a fork PR (draft while in progress) whose description says what
 the branch is for, with exactly one `status:` label: `status: wip`, `parked`, `fork-only`,
 `upstreaming`, `done` or `dropped` (`gh label list --search status` shows what each means).
