@@ -97,7 +97,8 @@ section and the snapshot's "Open fork issues" are what change.
      then `git stash drop 'stash@{<n>}'` and check the SHA it prints. `drop <sha>` fails
      with "is not a stash reference".
    - start a worker (see Workers)
-   - change CLAUDE.md, this skill or other agent setup: on a branch, as a fork PR
+   - change CLAUDE.md, this skill or other agent setup: on a branch, as a fork PR. Merge it
+     yourself when done, without asking (CLAUDE.md "Branching").
 3. **Upstream (`BLeeEZ/amperfy`): only with explicit approval of that one item, given at
    the time** (CLAUDE.md "PRs — hard rule"): each PR, issue, comment or review there. A
    general approval or one from earlier in the run does not count.
