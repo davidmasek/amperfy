@@ -73,6 +73,11 @@ original branch's PR, and is never merged.
 Rebase or merge to update a branch, whichever is simpler. Force-pushing your own branches
 is fine; `master` is protected (see "Remotes").
 
+A fork PR that changes only dev setup (`CLAUDE.md`, `.claude/`, `.env.local.example`) is
+merged by Claude without asking, once it is done:
+`gh pr merge <n> -R davidmasek/amperfy --rebase`. App changes are not merged into the fork's
+`master` when they go upstream: `master` gets them with the next upstream sync.
+
 ### Syncing `master` with upstream
 
 `master` is `upstream/master` plus dev setup only: this file, `.claude/`, `.env.local.example`,
