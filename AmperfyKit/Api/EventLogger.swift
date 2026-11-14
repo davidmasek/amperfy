@@ -219,6 +219,7 @@ public class EventLogger {
           logEntry.type = logType
           logEntry.statusCode = statusCode
           logEntry.message = logMessage
+          asynCompanion.library.deleteLogEntries(keepingNewest: 5000)
           asynCompanion.saveContext()
         }
         if displayPopup {
