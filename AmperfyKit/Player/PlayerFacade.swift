@@ -134,15 +134,25 @@ public struct PlayContext {
   }
 
   /// Context for playing `song` from a list that is not an album: the song's album in
-  /// album order, starting at `song`. A song without an album is played alone.
+  /// the album screen's order, starting at `song`. A song without an album is played alone.
   /// Returns nil if `song` is not among the playable album songs (e.g. offline and
   /// not cached), like the album screen, which then plays nothing.
-  public init?(songInAlbumContext song: Song, onlyCached: Bool = false) {
+  public init?(
+    songInAlbumContext song: Song,
+    onlyCached: Bool,
+    coreDataCompanion: CoreDataCompanion
+  ) {
     guard let album = song.album else {
       self.init(containable: song)
       return
     }
-    let songs = onlyCached ? album.songs.filter { $0.isCached } : album.songs
+    // same fetch as the album screen: its sort order and excluded songs
+    let albumSongs = AlbumSongsFetchedResultsController(
+      forAlbum: album,
+      coreDataCompanion: coreDataCompanion,
+      isGroupedInAlphabeticSections: false
+    )
+    let songs = albumSongs.getContextSongs(onlyCachedSongs: onlyCached) ?? []
     guard let index = songs.firstIndex(of: song) else { return nil }
     self.init(containable: album, index: index, playables: songs)
   }

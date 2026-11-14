@@ -35,6 +35,7 @@ class EntityPreviewActionBuilder {
   private var rootView: UIViewController
   private var playContextCb: GetPlayContextCallback?
   private var playerIndexCb: GetPlayerIndexCallback?
+  private var playAction: (() -> ())?
   private var appDelegate: AppDelegate
 
   private var entityPlayables: [AbstractPlayable] {
@@ -76,13 +77,15 @@ class EntityPreviewActionBuilder {
     container: PlayableContainable,
     on rootView: UIViewController,
     playContextCb: GetPlayContextCallback? = nil,
-    playerIndexCb: GetPlayerIndexCallback? = nil
+    playerIndexCb: GetPlayerIndexCallback? = nil,
+    playAction: (() -> ())? = nil
   ) {
     self.appDelegate = (UIApplication.shared.delegate as! AppDelegate)
     self.entityContainer = container
     self.rootView = rootView
     self.playContextCb = playContextCb
     self.playerIndexCb = playerIndexCb
+    self.playAction = playAction
   }
 
   public func createMenu() -> UIMenu {
@@ -427,7 +430,9 @@ class EntityPreviewActionBuilder {
   private func createPlayAction() -> UIAction {
     UIAction(title: "Play", image: .play) { action in
       guard !self.entityPlayables.isEmpty else { return }
-      if let playerIndex = self.playerIndexCb?() {
+      if let playAction = self.playAction {
+        playAction()
+      } else if let playerIndex = self.playerIndexCb?() {
         self.appDelegate.player.play(playerIndex: playerIndex)
       } else if let context = self.playContextCb?() {
         self.appDelegate.player.play(context: context)

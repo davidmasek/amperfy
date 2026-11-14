@@ -35,6 +35,7 @@ final class HomeVC: UICollectionViewController {
   private static let itemWidth: CGFloat = 160.0
 
   private var userButton: UIButton?
+  private var isPlayingInAlbumContext = false
   private var userBarButtonItem: UIBarButtonItem?
   private let account: Account
   private var accountNotificationHandler: AccountNotificationHandler?
@@ -323,25 +324,33 @@ final class HomeVC: UICollectionViewController {
 
   // MARK: - Play random song in its album
 
-  /// Random songs come without their album's other songs, so load them first.
-  private func fetchAlbumSongs(of song: Song) async {
-    guard let album = song.album else { return }
-    do {
-      try await album.fetch(
-        storage: appDelegate.storage,
-        librarySyncer: appDelegate.getMeta(account.info).librarySyncer,
-        playableDownloadManager: appDelegate.getMeta(account.info).playableDownloadManager
+  /// Used by tap and long-press > Play. Random songs come without their album's other
+  /// songs, so the album is fetched first. Further taps are ignored until that is done.
+  private func playInAlbumContext(_ song: Song) {
+    guard !isPlayingInAlbumContext else { return }
+    isPlayingInAlbumContext = true
+    Task { @MainActor in
+      defer { isPlayingInAlbumContext = false }
+      if let album = song.album {
+        do {
+          try await album.fetch(
+            storage: appDelegate.storage,
+            librarySyncer: appDelegate.getMeta(account.info).librarySyncer,
+            playableDownloadManager: appDelegate.getMeta(account.info).playableDownloadManager
+          )
+        } catch {
+          appDelegate.eventLogger.report(topic: "Album Sync", error: error)
+        }
+      }
+      let context = PlayContext(
+        songInAlbumContext: song,
+        onlyCached: appDelegate.storage.settings.user.isOfflineMode,
+        coreDataCompanion: appDelegate.storage.main
       )
-    } catch {
-      appDelegate.eventLogger.report(topic: "Album Sync", error: error)
+      if let context {
+        appDelegate.player.play(context: context)
+      }
     }
-  }
-
-  private func albumContext(for song: Song) -> PlayContext? {
-    PlayContext(
-      songInAlbumContext: song,
-      onlyCached: appDelegate.storage.settings.user.isOfflineMode
-    )
   }
 
   // MARK: - Selection Handling
@@ -372,12 +381,7 @@ final class HomeVC: UICollectionViewController {
       )
       navigationController?.navigationBar.prefersLargeTitles = false
     } else if let song = playableContainer as? Song {
-      Task { @MainActor in
-        await fetchAlbumSongs(of: song)
-        if let context = albumContext(for: song) {
-          appDelegate.player.play(context: context)
-        }
-      }
+      playInAlbumContext(song)
     } else if let podcastEpisode = playableContainer as? PodcastEpisode,
               let podcast = podcastEpisode.podcast {
       navigationController?.pushViewController(
@@ -439,25 +443,21 @@ extension HomeVC {
         } catch {
           self.appDelegate.eventLogger.report(topic: "Preview Sync", error: error)
         }
-        if let song = containable as? Song {
-          // so that "Play" in the menu finds the whole album
-          await self.fetchAlbumSongs(of: song)
-        }
         vc.refresh()
       }
       return vc
     }) { suggestedActions in
       var playIndexCB: (() -> PlayContext?)?
-      playIndexCB = {
-        if let song = containable as? Song {
-          return self.albumContext(for: song)
-        }
-        return PlayContext(containable: containable)
+      playIndexCB = { PlayContext(containable: containable) }
+      var playAction: (() -> ())?
+      if let song = containable as? Song {
+        playAction = { self.playInAlbumContext(song) }
       }
       return EntityPreviewActionBuilder(
         container: containable,
         on: self,
-        playContextCb: playIndexCB
+        playContextCb: playIndexCB,
+        playAction: playAction
       ).createMenu()
     }
   }

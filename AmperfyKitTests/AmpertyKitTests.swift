@@ -64,38 +64,64 @@ class MimeFileConverterTest: XCTestCase {
 class PlayContextAlbumTest: XCTestCase {
   var cdHelper: CoreDataHelper!
   var library: LibraryStorage!
+  var companion: CoreDataCompanion!
   var account: Account!
   var album: Album!
 
   override func setUp() async throws {
     cdHelper = CoreDataHelper()
     library = cdHelper.createSeededStorage()
+    companion = CoreDataCompanion(context: cdHelper.persistentContainer.viewContext)
     account = library.getAccount(info: TestAccountInfo.create1())
     album = library.createAlbum(account: account)
+    album.remoteStatus = .available
   }
 
-  private func addSong(track: Int, cached: Bool = false) -> Song {
+  private func addSong(track: Int, disc: String? = nil, cached: Bool = false) -> Song {
     let song = library.createSong(account: account)
     song.track = track
+    song.disk = disc
+    song.size = 1000
     song.album = album
     if cached {
-      song.relFilePath = URL(string: "song\(track).mp3")
+      song.relFilePath = URL(string: "song\(disc ?? "")\(track).mp3")
     }
     library.saveContext()
     return song
   }
 
+  private func context(
+    for song: Song,
+    onlyCached: Bool = false
+  )
+    -> PlayContext? {
+    PlayContext(songInAlbumContext: song, onlyCached: onlyCached, coreDataCompanion: companion)
+  }
+
   func testAlbumQueuedStartingAtSong() {
     let songs = [addSong(track: 1), addSong(track: 2), addSong(track: 3)]
-    let context = PlayContext(songInAlbumContext: songs[1])
+    let context = context(for: songs[1])
     XCTAssertEqual(context?.playables.compactMap { $0.asSong }, songs)
     XCTAssertEqual(context?.index, 1)
     XCTAssertEqual(context?.getActivePlayable(), songs[1])
   }
 
+  func testTwoDiscAlbumIsQueuedDiscByDisc() {
+    let disc2Track1 = addSong(track: 1, disc: "2")
+    let disc1Track2 = addSong(track: 2, disc: "1")
+    let disc2Track2 = addSong(track: 2, disc: "2")
+    let disc1Track1 = addSong(track: 1, disc: "1")
+    let context = context(for: disc2Track1)
+    XCTAssertEqual(
+      context?.playables.compactMap { $0.asSong },
+      [disc1Track1, disc1Track2, disc2Track1, disc2Track2]
+    )
+    XCTAssertEqual(context?.index, 2)
+  }
+
   func testSongWithoutAlbumIsQueuedAlone() {
     let song = library.createSong(account: account)
-    let context = PlayContext(songInAlbumContext: song)
+    let context = context(for: song)
     XCTAssertEqual(context?.playables.count, 1)
     XCTAssertEqual(context?.getActivePlayable(), song)
   }
@@ -103,10 +129,10 @@ class PlayContextAlbumTest: XCTestCase {
   func testUnsyncedAlbumQueuesOnlyKnownSongsUntilFetched() {
     let first = addSong(track: 1)
     XCTAssertFalse(album.isSongsMetaDataSynced)
-    XCTAssertEqual(PlayContext(songInAlbumContext: first)?.playables.count, 1)
+    XCTAssertEqual(context(for: first)?.playables.count, 1)
     // what the album fetch does: store the album's other songs
     let second = addSong(track: 2)
-    let context = PlayContext(songInAlbumContext: first)
+    let context = context(for: first)
     XCTAssertEqual(context?.playables.compactMap { $0.asSong }, [first, second])
     XCTAssertEqual(context?.index, 0)
   }
@@ -115,7 +141,7 @@ class PlayContextAlbumTest: XCTestCase {
     _ = addSong(track: 1)
     let cached2 = addSong(track: 2, cached: true)
     let cached3 = addSong(track: 3, cached: true)
-    let context = PlayContext(songInAlbumContext: cached3, onlyCached: true)
+    let context = context(for: cached3, onlyCached: true)
     XCTAssertEqual(context?.playables.compactMap { $0.asSong }, [cached2, cached3])
     XCTAssertEqual(context?.index, 1)
   }
@@ -123,6 +149,6 @@ class PlayContextAlbumTest: XCTestCase {
   func testOfflineUncachedSongWithCachedSiblingsPlaysNothing() {
     let uncached = addSong(track: 1)
     _ = addSong(track: 2, cached: true)
-    XCTAssertNil(PlayContext(songInAlbumContext: uncached, onlyCached: true))
+    XCTAssertNil(context(for: uncached, onlyCached: true))
   }
 }
