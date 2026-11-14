@@ -321,6 +321,29 @@ final class HomeVC: UICollectionViewController {
     }
   }
 
+  // MARK: - Play random song in its album
+
+  /// Random songs come without their album's other songs, so load them first.
+  private func fetchAlbumSongs(of song: Song) async {
+    guard let album = song.album else { return }
+    do {
+      try await album.fetch(
+        storage: appDelegate.storage,
+        librarySyncer: appDelegate.getMeta(account.info).librarySyncer,
+        playableDownloadManager: appDelegate.getMeta(account.info).playableDownloadManager
+      )
+    } catch {
+      appDelegate.eventLogger.report(topic: "Album Sync", error: error)
+    }
+  }
+
+  private func albumContext(for song: Song) -> PlayContext? {
+    PlayContext(
+      songInAlbumContext: song,
+      onlyCached: appDelegate.storage.settings.user.isOfflineMode
+    )
+  }
+
   // MARK: - Selection Handling
 
   override func collectionView(
@@ -349,10 +372,12 @@ final class HomeVC: UICollectionViewController {
       )
       navigationController?.navigationBar.prefersLargeTitles = false
     } else if let song = playableContainer as? Song {
-      appDelegate.player.play(context: PlayContext(
-        songInAlbumContext: song,
-        onlyCached: appDelegate.storage.settings.user.isOfflineMode
-      ))
+      Task { @MainActor in
+        await fetchAlbumSongs(of: song)
+        if let context = albumContext(for: song) {
+          appDelegate.player.play(context: context)
+        }
+      }
     } else if let podcastEpisode = playableContainer as? PodcastEpisode,
               let podcast = podcastEpisode.podcast {
       navigationController?.pushViewController(
@@ -414,12 +439,21 @@ extension HomeVC {
         } catch {
           self.appDelegate.eventLogger.report(topic: "Preview Sync", error: error)
         }
+        if let song = containable as? Song {
+          // so that "Play" in the menu finds the whole album
+          await self.fetchAlbumSongs(of: song)
+        }
         vc.refresh()
       }
       return vc
     }) { suggestedActions in
       var playIndexCB: (() -> PlayContext?)?
-      playIndexCB = { PlayContext(containable: containable) }
+      playIndexCB = {
+        if let song = containable as? Song {
+          return self.albumContext(for: song)
+        }
+        return PlayContext(containable: containable)
+      }
       return EntityPreviewActionBuilder(
         container: containable,
         on: self,

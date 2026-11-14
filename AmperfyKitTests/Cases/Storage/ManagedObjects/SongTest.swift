@@ -67,42 +67,6 @@ class SongTest: XCTestCase {
     XCTAssertEqual(song.replayGainTrackPeak, 0.0)
   }
 
-  func testPlayContextInAlbumContext_QueuesAlbumStartingAtSong() {
-    let album = library.createAlbum(account: account)
-    var songs = [Song]()
-    for i in 1 ... 3 {
-      let song = library.createSong(account: account)
-      song.track = Int(i)
-      song.album = album
-      songs.append(song)
-    }
-    library.saveContext()
-    let context = PlayContext(songInAlbumContext: songs[1])
-    XCTAssertEqual(context.playables.count, 3)
-    XCTAssertEqual(context.index, 1)
-    XCTAssertEqual(context.getActivePlayable(), songs[1])
-    XCTAssertEqual(context.playables.compactMap { $0.asSong }, songs)
-    XCTAssertEqual(context.name, album.name)
-  }
-
-  func testPlayContextInAlbumContext_NoAlbum_OnlySong() {
-    let context = PlayContext(songInAlbumContext: testSong)
-    XCTAssertEqual(context.playables.count, 1)
-    XCTAssertEqual(context.index, 0)
-    XCTAssertEqual(context.getActivePlayable(), testSong)
-  }
-
-  func testPlayContextInAlbumContext_OnlyCached_NoCachedSong_OnlySong() {
-    let album = library.createAlbum(account: account)
-    testSong.album = album
-    let other = library.createSong(account: account)
-    other.album = album
-    library.saveContext()
-    let context = PlayContext(songInAlbumContext: testSong, onlyCached: true)
-    XCTAssertEqual(context.playables.count, 1)
-    XCTAssertEqual(context.getActivePlayable(), testSong)
-  }
-
   func testArtist() {
     guard let artist = library.getArtist(for: account, id: cdHelper.seeder.artists[0].id)
     else { XCTFail(); return }

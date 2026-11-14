@@ -133,20 +133,18 @@ public struct PlayContext {
     containable.playedViaContext()
   }
 
-  /// Context for playing `song` from a list that is not an album (e.g. random songs):
-  /// the song's whole album in album order, starting at `song`. Falls back to `song`
-  /// alone when it has no album or is not found in the album's songs.
-  public init(songInAlbumContext song: Song, onlyCached: Bool = false) {
+  /// Context for playing `song` from a list that is not an album: the song's album in
+  /// album order, starting at `song`. A song without an album is played alone.
+  /// Returns nil if `song` is not among the playable album songs (e.g. offline and
+  /// not cached), like the album screen, which then plays nothing.
+  public init?(songInAlbumContext song: Song, onlyCached: Bool = false) {
     guard let album = song.album else {
       self.init(containable: song)
       return
     }
-    let albumSongs = onlyCached ? album.songs.filter { $0.isCached } : album.songs
-    guard let index = albumSongs.firstIndex(where: { $0 == song }) else {
-      self.init(containable: song)
-      return
-    }
-    self.init(containable: album, index: index, playables: albumSongs)
+    let songs = onlyCached ? album.songs.filter { $0.isCached } : album.songs
+    guard let index = songs.firstIndex(of: song) else { return nil }
+    self.init(containable: album, index: index, playables: songs)
   }
 
   func getActivePlayable() -> AbstractPlayable? {
