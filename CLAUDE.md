@@ -195,6 +195,10 @@ app data.
 8. **Open Settings**: tap the profile icon at `38 83` (no label), then `idb ui tap "Settings"`.
    **Home Preferences** (e.g. to show the Random Songs section, off by default): tap Edit at
    `356 84`, `idb ui tap "Random Songs"`, `idb ui tap "Done"`, then scroll down.
+   **Account settings switches** (e.g. "Scrobble streamed Songs", Settings > Account, after
+   `idb ui swipe 200 650 200 200 --duration 0.4`): a plain tap on the label or the switch
+   (`341 207`) does nothing; press the switch with `idb ui tap 340 207 --duration 0.15`, then
+   screenshot to confirm it turned green.
 9. **Shut down and delete** the device you created:
    ```
    xcrun simctl terminate <sim id> <bundle id>
@@ -215,7 +219,15 @@ as the check is done: a playing app keeps sounding until it is stopped.
 
 Setting `_playerVolume` to 0 in the `settings.user` JSON of the app's preferences plist
 silences it, but only if the simulator is shut down while editing (a booted simulator's
-`cfprefsd` serves the old value).
+`cfprefsd` serves the old value). A fresh install has no `settings.user` key until a user
+setting is changed; launch the app once so the plist exists, shut the simulator down, then
+write the key as data (the app fills in missing keys). The container is under
+`~/Library/Developer/CoreSimulator/Devices/<sim id>/data/Containers/Data/Application/`; pick
+the folder whose `.com.apple.mobile_container_manager.metadata.plist` names the bundle id:
+```
+python3 -I -c "import plistlib,sys;p=sys.argv[1];d=plistlib.load(open(p,'rb'));d['settings.user']=b'{\"_playerVolume\":0}';plistlib.dump(d,open(p,'wb'),fmt=plistlib.FMT_BINARY)" <container>/Library/Preferences/<bundle id>.plist
+```
+Then boot and launch again.
 
 1. **Play**: `idb ui tap 100 220` opens the first Random Album on Home, `idb ui tap "Play"`
    starts it, `idb ui tap 150 755` opens the full player. Close the player with
