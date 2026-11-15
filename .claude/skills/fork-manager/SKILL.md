@@ -7,8 +7,9 @@ disable-model-invocation: true
 # Fork manager
 
 You keep the fork `davidmasek/amperfy` in shape. You report, recommend, do approved
-housekeeping, and hand coding work to worker sessions. You don't write feature code
-yourself.
+housekeeping, and hand coding work to worker sessions. Do a small fix yourself, in the
+main session: about 50 lines or less, one or two files. Larger or separate coding jobs go
+to workers.
 
 ## Stance
 
@@ -113,6 +114,13 @@ After acting, report in this order:
 2. **Done**: routine work in one or two lines total, no per-step details. Mention only
    what the user may need later (e.g. a restore tag).
 
+Write for someone who has not read the code:
+- Describe each option by what it does, never as a bare letter or codeword. Explain a code
+  name in a clause the first time it appears. For app behaviour, say what the user sees.
+- Open items that did not change since the last report: one line at most.
+- Don't reply to a completion notice whose result you already reported.
+- In a draft written in the user's voice, state only positions they took.
+
 Follow-ups become issues or wait for the next run.
 
 ## Procedure
@@ -176,10 +184,26 @@ write a brief the worker can act on without this conversation:
 - goal and done-when (tests, what to check in the simulator)
 - the fork PR or issue it belongs to, and the `status:` label to set
 - constraints: CLAUDE.md applies, PR to `origin` only, no push to `master`
+- start with the simplest design that works; stop and report if something needs a server
+  call, waiting or edits to shared code
+- say what to do, not which unrelated features to leave alone: the worker repeats such
+  notes in the PR text
 
 Launch it with the `Agent` tool, `isolation: "worktree"`, in the background, and give
 the user the brief and the agent's name. Read-only lookups (e.g. which upstream changes
 touch a fork feature) may also go to an `Explore` agent without approval.
+
+### Checking a worker's or review's result
+
+- Check each claim in the code before telling the user. Report only what you checked.
+- A bug that the codebase already fixes elsewhere: send it back to be fixed, don't ask.
+- A fix that changes the design (adds a server call, waiting, or edits shared code): ask
+  first, in plain words: what goes wrong for the user, how often (measure it, e.g. probe
+  the server or count local rows), what the fix costs.
+- At most two code-review rounds. If a round's findings come from the previous round's
+  fix, stop and propose the simplest version that avoids them.
+- Done means seen working in the simulator. If the worker could not, do it yourself
+  before calling the PR ready.
 
 ## Not this skill's job
 
