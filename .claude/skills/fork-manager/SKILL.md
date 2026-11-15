@@ -189,9 +189,9 @@ write a brief the worker can act on without this conversation:
 - say what to do, not which unrelated features to leave alone: the worker repeats such
   notes in the PR text
 
-Launch it with the `Agent` tool, `isolation: "worktree"`, in the background, and give
-the user the brief and the agent's name. Read-only lookups (e.g. which upstream changes
-touch a fork feature) may also go to an `Explore` agent without approval.
+Launch it as an `hc` terminal (CLAUDE.md "Workers": worktree, brief file, `hc run --bg`),
+and give the user the brief and the terminal's name. Read-only lookups (e.g. which upstream
+changes touch a fork feature) may go to an `Explore` agent without approval.
 
 ### Checking a worker's or review's result
 
