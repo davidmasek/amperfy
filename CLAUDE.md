@@ -192,7 +192,7 @@ app data.
    2. In-app "Synchronization" notice: `idb ui tap "Close"`.
    3. In-app "Notifications" notice: `idb ui tap "Close"`.
    4. System notification permission: `idb ui tap "Don’t Allow"` (curly apostrophe).
-8. **Open Settings**: tap the profile icon at `38 83` (it has the label "Account", but `describe-all` and `idb ui tap "Account"` don't see navigation bar buttons; `idb ui describe-point 38 83` does), then `idb ui tap "Settings"`.
+8. **Open Settings**: tap the profile icon at `38 83` (label "Account", but `idb ui tap "Account"` fails with "no element whose AXLabel contains": `idb ui describe-all` does not list navigation bar buttons of the main screens. Reading them works with `idb ui describe-all --api axbridge --format complete` or `idb ui describe-point 38 83`, only taps need coordinates. Inside Settings sheets the default `describe-all` lists the + buttons and `idb ui tap "Add Leading Swipe"` works; the back button and Server URLs + still need coordinates: `38 100` and `364 100`), then `idb ui tap "Settings"`.
    **Home Preferences** (e.g. to show the Random Songs section, off by default): tap Edit at
    `356 84`, `idb ui tap "Random Songs"`, `idb ui tap "Done"`, then scroll down.
    **Account settings switches** (e.g. "Scrobble streamed Songs", Settings > Account, after
