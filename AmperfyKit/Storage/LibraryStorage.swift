@@ -2107,6 +2107,13 @@ public class LibraryStorage: PlayableFileCachable {
     return entries ?? [LogEntry]()
   }
 
+  public func deleteLogEntries(keepingNewest count: Int) {
+    let fetchRequest: NSFetchRequest<LogEntryMO> = LogEntryMO.creationDateSortedFetchRequest
+    fetchRequest.fetchOffset = count
+    guard let surplus = try? context.fetch(fetchRequest) else { return }
+    surplus.forEach { context.delete($0) }
+  }
+
   // MARK: PlayerData
 
   func getPlayerData() -> PlayerData {
