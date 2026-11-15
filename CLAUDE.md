@@ -133,8 +133,11 @@ Run workers (coding sessions that explore, estimate or implement one task) as `h
 2. **Brief**: write it to a file in the scratchpad: goal, done-when, the issue or PR it belongs
    to, the `status:` label, and that CLAUDE.md applies. A worker cannot see this conversation.
 3. **Start**: `hc run --bg --name w<issue>-<kind> --cwd <worktree> claude "Read <brief file> and carry out that task."`
-   Workers start in auto mode: no permission prompts. `hc run` types a note into the starting
-   terminal when the worker ends (`--no-notify` turns it off).
+   Workers start in auto mode: no permission prompts. Nothing wakes the starting session when
+   a worker ends (the "note typed into the parent" `hc run --help` describes never showed up
+   in the session's input). Right after starting the workers, run
+   `hc wait --children all` as a background Bash command (`run_in_background`); its exit
+   re-invokes the session. Then read each result.
 4. **Manage**: `hc ls` (state and `working`/`done`), `hc read <name>` (its screen),
    `hc wait <name>` (instead of `sleep`), `hc send <name> "<text>"` (answer or redirect it),
    `hc kill <name>`, `hc rm <name>` for a finished one.
