@@ -72,12 +72,20 @@ class PlayContextAlbumTest: XCTestCase {
     library = cdHelper.createSeededStorage()
     account = library.getAccount(info: TestAccountInfo.create1())
     album = library.createAlbum(account: account)
+    album.remoteStatus = .available
   }
 
-  private func addSong(track: Int, disc: String? = nil, cached: Bool = false) -> Song {
+  private func addSong(
+    track: Int,
+    disc: String? = nil,
+    cached: Bool = false,
+    size: Int = 1000
+  )
+    -> Song {
     let song = library.createSong(account: account)
     song.track = track
     song.disk = disc
+    song.size = size
     song.album = album
     if cached {
       song.relFilePath = URL(string: "song\(disc ?? "")\(track).mp3")
@@ -129,6 +137,31 @@ class PlayContextAlbumTest: XCTestCase {
     _ = addSong(track: 2, cached: true)
     let context = PlayContext(songInAlbumContext: uncached, onlyCached: true)
     XCTAssertEqual(queued(context), [uncached])
+  }
+
+  func testUnavailableSiblingIsNotQueued() {
+    let first = addSong(track: 1)
+    _ = addSong(track: 2, size: 0) // removed on the server, not cached
+    let third = addSong(track: 3)
+    let context = PlayContext(songInAlbumContext: third, onlyCached: false)
+    XCTAssertEqual(queued(context), [first, third])
+    XCTAssertEqual(context.getActivePlayable(), third)
+  }
+
+  func testUnavailableTappedSongIsStillQueued() {
+    let first = addSong(track: 1)
+    let tapped = addSong(track: 2, size: 0)
+    let context = PlayContext(songInAlbumContext: tapped, onlyCached: false)
+    XCTAssertEqual(queued(context), [first, tapped])
+    XCTAssertEqual(context.getActivePlayable(), tapped)
+  }
+
+  func testShuffleStartsAtTappedSong() {
+    let songs = (1 ... 10).map { addSong(track: $0) }
+    let context = PlayContext(songInAlbumContext: songs[6], onlyCached: false)
+    for _ in 0 ..< 20 {
+      XCTAssertEqual(context.getWithShuffledIndex().getActivePlayable(), songs[6])
+    }
   }
 
   func testAlbumPlayCountIsNotIncreased() {
