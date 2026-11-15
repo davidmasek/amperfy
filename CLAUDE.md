@@ -192,7 +192,7 @@ app data.
    2. In-app "Synchronization" notice: `idb ui tap "Close"`.
    3. In-app "Notifications" notice: `idb ui tap "Close"`.
    4. System notification permission: `idb ui tap "Don’t Allow"` (curly apostrophe).
-8. **Open Settings**: tap the profile icon at `38 83` (no label), then `idb ui tap "Settings"`.
+8. **Open Settings**: tap the profile icon at `38 83` (it has the label "Account", but `describe-all` and `idb ui tap "Account"` don't see navigation bar buttons; `idb ui describe-point 38 83` does), then `idb ui tap "Settings"`.
    **Home Preferences** (e.g. to show the Random Songs section, off by default): tap Edit at
    `356 84`, `idb ui tap "Random Songs"`, `idb ui tap "Done"`, then scroll down.
    **Account settings switches** (e.g. "Scrobble streamed Songs", Settings > Account, after
@@ -230,11 +230,11 @@ python3 -I -c "import plistlib,sys;p=sys.argv[1];d=plistlib.load(open(p,'rb'));d
 Then boot and launch again.
 
 1. **Play**: `idb ui tap 100 220` opens the first Random Album on Home, `idb ui tap "Play"`
-   starts it, `idb ui tap 150 755` opens the full player. Close the player with
+   starts it, `idb ui tap "Open Player"` opens the full player. Close the player with
    `idb ui swipe 200 70 200 700 --duration 0.4`.
 2. **Read the player**: `idb ui describe-all --udid <sim id> --format complete | grep -oE '"label":"[^"]*"'`
    shows the elapsed/remaining time (`0:04`, `-0:21`) and the audio info label (`MP3 320 kbps`).
-   Two reads a few seconds apart show whether it is playing. Pause with `idb ui tap "pause"`.
+   Two reads a few seconds apart show whether it is playing. Pause with `idb ui tap "Pause"`.
 
 Other taps that work: `idb ui tap "Resync Library"` (Settings > Account, after
 `idb ui swipe 200 600 200 150 --duration 0.4`) opens a confirmation; `idb ui tap "Resync"` hits
