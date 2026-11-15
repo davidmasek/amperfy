@@ -386,6 +386,15 @@ and say when it is done, then check the result from outside the app. One action 
 - Keep each step to one action. Reasons get one clause, only when skipping the step would
   look reasonable but break things.
 
+## PR descriptions
+
+- About 10 to 15 lines, readable without the conversation: the problem in plain words, what
+  changes, how it was checked.
+- Under "tested", list only checks a reviewer cannot assume (e.g. what was tapped in the
+  simulator and what appeared). Don't say that unit tests ran or passed, and don't list
+  things that were not checked.
+- Don't mention unrelated features or issues.
+
 ## Before opening a PR
 
 - Run `AmperfyKitTests` (also applies SwiftFormat/Google style automatically).
