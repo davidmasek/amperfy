@@ -173,16 +173,19 @@ app data.
 6. **Tap by label**: `idb ui tap "<label>" --udid <sim id> --reason "<why>"`. Take a screenshot
    afterwards to confirm. For an element without a label, tap coordinates: points are
    screenshot pixels / 3 on the iPhone 17 Pro. `idb ui text "<string>"` types into the focused
-   field. `idb ui swipe` and `key` are untried with this app.
+   field. `idb ui swipe 200 650 200 200 --duration 0.4` scrolls a page; `key` is untried with
+   this app. Long-press: `idb ui tap <x> <y> --duration 1.5` (coordinates only; label taps
+   reject `--duration`).
 7. **Log in** to the test server (values from `.env.local`: `set -a; . ./.env.local; set +a`),
    on the fresh install's login screen (iPhone 17 Pro points):
    ```
    idb ui tap 200 330 --udid <sim id> --reason "focus server URL field"; idb ui text "$NAVIDROME_URL" --udid <sim id>
    idb ui tap 200 385 --udid <sim id> --reason "focus username field";   idb ui text "$NAVIDROME_USER" --udid <sim id>
    idb ui tap 200 440 --udid <sim id> --reason "focus password field";   idb ui text "$NAVIDROME_PASSWORD" --udid <sim id>
-   idb ui tap "Login" --udid <sim id> --reason "submit login"
+   idb ui tap 201 635 --udid <sim id> --reason "submit login"
    ```
-   About 10 seconds later, clear the prompts in this order, checking with a screenshot between
+   `idb ui tap "Login"` fails with "No translation object returned for simulator" (the
+   button has no label), hence the coordinates. About 10 seconds later, clear the prompts in this order, checking with a screenshot between
    them:
    1. System "Save Password?": not in the accessibility tree (`describe-all` shows only the
       root element). Tap Not Now at `127 547`.
@@ -190,13 +193,16 @@ app data.
    3. In-app "Notifications" notice: `idb ui tap "Close"`.
    4. System notification permission: `idb ui tap "Don’t Allow"` (curly apostrophe).
 8. **Open Settings**: tap the profile icon at `38 83` (no label), then `idb ui tap "Settings"`.
+   **Home Preferences** (e.g. to show the Random Songs section, off by default): tap Edit at
+   `356 84`, `idb ui tap "Random Songs"`, `idb ui tap "Done"`, then scroll down.
 9. **Shut down and delete** the device you created:
    ```
    xcrun simctl terminate <sim id> <bundle id>
    xcrun simctl shutdown <sim id>
    xcrun simctl delete <sim id>
    ```
-   Never shut down or delete a device you didn't create.
+   Never shut down or delete a device you didn't create. Then stop its helper:
+   `pkill -f 'idb_companion --udid <sim id>'` (it outlives the device otherwise).
 
 Screenshots of the filled login form or the account menu show the server host and username:
 don't attach them to a PR.
