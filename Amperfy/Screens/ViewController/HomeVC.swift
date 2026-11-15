@@ -321,6 +321,13 @@ final class HomeVC: UICollectionViewController {
     }
   }
 
+  private func albumContext(for song: Song) -> PlayContext {
+    PlayContext(
+      songInAlbumContext: song,
+      onlyCached: appDelegate.storage.settings.user.isOfflineMode
+    )
+  }
+
   // MARK: - Selection Handling
 
   override func collectionView(
@@ -349,7 +356,7 @@ final class HomeVC: UICollectionViewController {
       )
       navigationController?.navigationBar.prefersLargeTitles = false
     } else if let song = playableContainer as? Song {
-      appDelegate.player.play(context: PlayContext(containable: song))
+      appDelegate.player.play(context: albumContext(for: song))
     } else if let podcastEpisode = playableContainer as? PodcastEpisode,
               let podcast = podcastEpisode.podcast {
       navigationController?.pushViewController(
@@ -416,7 +423,12 @@ extension HomeVC {
       return vc
     }) { suggestedActions in
       var playIndexCB: (() -> PlayContext?)?
-      playIndexCB = { PlayContext(containable: containable) }
+      playIndexCB = {
+        if let song = containable as? Song {
+          return self.albumContext(for: song)
+        }
+        return PlayContext(containable: containable)
+      }
       return EntityPreviewActionBuilder(
         container: containable,
         on: self,
