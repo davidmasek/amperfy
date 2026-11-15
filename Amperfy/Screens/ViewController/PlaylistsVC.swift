@@ -135,8 +135,7 @@ class PlaylistsVC: SingleSnapshotFetchedResultsTableViewController<PlaylistMO> {
     )
     setNavBarTitle(title: "Playlists")
     tableView.register(nibName: PlaylistTableCell.typeName)
-    tableView.rowHeight = PlaylistTableCell.rowHeight
-    tableView.estimatedRowHeight = PlaylistTableCell.rowHeight
+    tableView.reloadOnTextSizeChange { PlaylistTableCell.rowHeight }
     tableView.sectionFooterHeight = 0.0
     tableView.estimatedSectionFooterHeight = 0.0
     tableView.sectionHeaderHeight = 0.0
@@ -359,7 +358,8 @@ class PlaylistsVC: SingleSnapshotFetchedResultsTableViewController<PlaylistMO> {
         }
         self.appDelegate.eventLogger.info(
           topic: "Sync All Playlists",
-          message: "All playlists have been synced."
+          message: "All playlists have been synced.",
+          toast: AlertToastText(title: "Playlists", subtitle: "All playlists synced")
         )
       } catch {
         self.appDelegate.eventLogger.report(topic: "Sync All Playlists", error: error)
