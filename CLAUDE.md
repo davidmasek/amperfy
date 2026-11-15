@@ -122,6 +122,28 @@ When `git log --oneline --no-merges upstream/master..master` gets long, rebuild 
 7. In every other checkout: `git checkout master && git reset --hard origin/master`
    (check `git status` is clean first).
 
+## Workers
+
+Run workers (coding sessions that explore, estimate or implement one task) as `hc` terminals
+(`hc` ships with herdr), not with the `Agent` tool. One worker per task.
+
+1. **Worktree**: `git worktree add .claude/worktrees/<name> -b <branch> origin/master` for a
+   task that ends in a PR; `git worktree add --detach .claude/worktrees/<name> origin/master`
+   for a read-only one. `.claude/worktrees` is gitignored.
+2. **Brief**: write it to a file in the scratchpad: goal, done-when, the issue or PR it belongs
+   to, the `status:` label, and that CLAUDE.md applies. A worker cannot see this conversation.
+3. **Start**: `hc run --bg --name w<issue>-<kind> --cwd <worktree> claude "Read <brief file> and carry out that task."`
+   Workers start in auto mode: no permission prompts. `hc run` types a note into the starting
+   terminal when the worker ends (`--no-notify` turns it off).
+4. **Manage**: `hc ls` (state and `working`/`done`), `hc read <name>` (its screen),
+   `hc wait <name>` (instead of `sleep`), `hc send <name> "<text>"` (answer or redirect it),
+   `hc kill <name>`, `hc rm <name>` for a finished one.
+5. **Clean up** when the PR or comment is out: `hc rm <name>`, then
+   `git worktree remove .claude/worktrees/<name>` (re-check `lsof` first, see the
+   fork-manager skill).
+
+Read-only lookups for yourself still go to an `Explore` agent.
+
 ## Secrets
 
 Never put credentials or private URLs directly in this file or any other tracked file.
