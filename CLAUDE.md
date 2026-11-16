@@ -289,6 +289,18 @@ Tried or deliberately skipped:
     the test runner for an Accessibility permission.
   - Xcode raises the project's `objectVersion` from 54 to 70. Never commit that in an upstream PR.
 
+## Navidrome source (read-only)
+
+A clone of `navidrome/navidrome` is at `/Users/david/Desktop/navidrome`. Read it to see how
+the test server answers an API call (e.g. `git grep getSimilarSongs`). Compare with the
+running version: `serverVersion` in `curl -s "$NAVIDROME_URL/rest/ping?$Q&f=json"` (see
+"Test servers"); read that version's code with `git show v<version>:<path>`.
+
+Do not edit, commit or check out another branch there, and do not fork or open PRs or
+issues on `navidrome/navidrome`. When a server-side fix would solve an Amperfy problem,
+write down the change you would make (file, function, what it does) in your report or in
+the fork issue; the user decides whether to act on it.
+
 ## Test servers (API probes with `curl`)
 
 Probe what a server really returns before changing URL generation in `AmperfyKit/Api`.
