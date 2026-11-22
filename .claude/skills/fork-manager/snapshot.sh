@@ -96,7 +96,7 @@ echo
 echo "## origin branches with no local branch and no fork PR"
 for r in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin); do
   b=${r#origin/}
-  case "$b" in origin | HEAD | master | "$MIRROR") continue ;; esac
+  case "$b" in origin | HEAD | master | pr-assets | "$MIRROR") continue ;; esac
   git show-ref --quiet "refs/heads/$b" && continue
   [ -n "$(fork_prs_for "$b")" ] && continue
   printf '%s ' "$b"
