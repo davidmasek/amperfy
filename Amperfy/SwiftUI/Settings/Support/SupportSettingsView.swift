@@ -36,6 +36,8 @@ struct SupportSettingsView: View {
   var result: Result<MFMailComposeResult, Error>? = nil
   @State
   var isShowingMailView = false
+  @State
+  var isShowingMailUnavailable = false
 
   var body: some View {
     ZStack {
@@ -60,8 +62,9 @@ struct SupportSettingsView: View {
                 topic: "Email Info",
                 statusCode: .emailError,
                 message: "Email is not configured in settings app or Amperfy is not able to send an email.",
-                displayPopup: true
+                displayPopup: false
               )
+              isShowingMailUnavailable = true
             }
           }
           ShareLink(
@@ -97,6 +100,13 @@ struct SupportSettingsView: View {
           )]
         )
       }
+    }
+    .alert("Mail Not Available", isPresented: $isShowingMailUnavailable) {
+      Button("OK", role: .cancel) {}
+    } message: {
+      Text(
+        "Sending requires an account in Apple's Mail app. You can use \"Export log\" instead and attach the file to a message."
+      )
     }
     .navigationTitle("Support")
     .navigationBarTitleDisplayMode(.inline)
