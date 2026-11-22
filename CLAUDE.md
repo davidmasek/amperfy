@@ -68,7 +68,8 @@ the branch is for, with exactly one `status:` label: `status: wip`, `parked`, `f
 `upstreaming`, `done` or `dropped` (`gh label list --search status` shows what each means).
 Add it with `gh pr create ... --label "status: wip"`. A cherry-picked upstream branch's
 fork PR targets `upstream-master` (the fork's mirror of `upstream/master`), links the
-original branch's PR, and is never merged.
+original branch's PR, and is never merged. Exception: `pr-assets` (PR screenshots, see "PR
+descriptions") has no PR and is never merged or deleted.
 
 Rebase or merge to update a branch, whichever is simpler. Force-pushing your own branches
 is fine; `master` is protected (see "Remotes").
@@ -152,7 +153,10 @@ Read-only lookups for yourself still go to an `Explore` agent.
 
 Never put credentials or private URLs directly in this file or any other tracked file.
 Local test-server details live in `.env.local` (gitignored) — see `.env.local.example`
-for the format. Currently points at a personal Navidrome instance reachable over Tailscale.
+for the format. `NAVIDROME_*` is the local test server (see "Test servers"); use it for
+everything. `REAL_NAVIDROME_*` is the user's personal server with real data: read-only `curl`
+probes only, never log the app in to it (plays, favourites, playlist edits and resyncs
+write to it).
 
 ## Build
 
@@ -308,8 +312,34 @@ Probe what a server really returns before changing URL generation in `AmperfyKit
 Compare `Content-Type`, byte count and `ffprobe -show_entries format=bit_rate -of csv=p=0`
 of the saved body. Wait a few seconds between Ampache requests: rapid ones get HTTP 429.
 
-### Subsonic: Navidrome from `.env.local`
+### Subsonic: local Navidrome (`NAVIDROME_*` in `.env.local`)
 
+Docker container `navidrome-test`, `http://localhost:4533` (the simulator reaches it too),
+user `test`, 3 artists × 2 albums × 4 generated FLACs. Its data is in `~/amperfy-test-navidrome`
+(`music/`, `data/`, `password`). It restarts with Docker (`open -a Docker`). Don't remove it;
+it is shared by all sessions.
+
+If it is missing (`docker ps -a --filter name=navidrome-test` prints no row), recreate it:
+```
+D=~/amperfy-test-navidrome; mkdir -p $D/music $D/data
+for a in "North Pines" "Glass Harbor" "Copper Field"; do for al in 1 2; do dir="$D/music/$a/Album $al"; mkdir -p "$dir"
+  for t in 1 2 3 4; do ffmpeg -loglevel error -y -f lavfi -i "sine=frequency=$((200+t*110+al*30)):duration=45" \
+    -metadata title="$a Song $al.$t" -metadata artist="$a" -metadata album="$a Album $al" -metadata track=$t \
+    -c:a flac "$dir/$t.flac"; done; done; done
+docker run -d --name navidrome-test --restart unless-stopped -p 127.0.0.1:4533:4533 \
+  -v $D/music:/music:ro -v $D/data:/data -e ND_SCANSCHEDULE=1m deluan/navidrome:0.64.2
+```
+With an empty `data/`, create the user (then update `NAVIDROME_PASSWORD` in `.env.local`):
+```
+openssl rand -hex 12 | tr -d '\n' > $D/password; chmod 600 $D/password
+curl -s -X POST localhost:4533/auth/createAdmin -H 'Content-Type: application/json' \
+  -d "{\"username\":\"test\",\"password\":\"$(cat $D/password)\"}"
+```
+Rescan after adding files: `startScan` with `$Q` from the probes below. To reset all
+server state (plays, favourites, playlists): `docker rm -f navidrome-test`, empty `data/`,
+then both blocks above.
+
+Probes:
 ```
 set -a; . ./.env.local; set +a
 Q="u=$NAVIDROME_USER&p=$NAVIDROME_PASSWORD&v=1.13.0&c=probe"   # v matches what Amperfy sends
@@ -450,6 +480,21 @@ and say when it is done, then check the result from outside the app. One action 
   simulator and what appeared). Don't say that unit tests ran or passed, and don't list
   things that were not checked.
 - Don't mention unrelated features or issues.
+- A PR that changes what the user sees includes a screenshot of the change, taken in the
+  simulator ("Simulator automation"; never one showing the server host or username).
+  Host it on the `pr-assets` branch, at `<pr branch>/<name>.png`, without checking it out
+  (zsh: write `${C}:refs/...`, since `$C:r` is a zsh modifier):
+  ```
+  sips -Z 1000 <scratch>/shot.png --out <scratch>/shot-small.png
+  git fetch origin pr-assets
+  GIT_INDEX_FILE=<scratch>/assets.idx git read-tree origin/pr-assets
+  GIT_INDEX_FILE=<scratch>/assets.idx git update-index --add --cacheinfo 100644,$(git hash-object -w <scratch>/shot-small.png),<pr branch>/<name>.png
+  C=$(git commit-tree $(GIT_INDEX_FILE=<scratch>/assets.idx git write-tree) -p origin/pr-assets -m "PR screenshots: <pr branch>")
+  git push origin "${C}:refs/heads/pr-assets"
+  ```
+  Embed it with
+  `<img src="https://raw.githubusercontent.com/davidmasek/amperfy/pr-assets/<pr branch>/<name>.png" width="300">`
+  (the `github.com/.../raw/...` form returns 404). Use the same link in the upstream PR.
 
 ## Before opening a PR
 
