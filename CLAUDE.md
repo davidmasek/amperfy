@@ -143,7 +143,8 @@ Run workers (coding sessions that explore, estimate or implement one task) as `h
 4. **Manage**: `hc ls` (state and `working`/`done`), `hc read <name>` (its screen),
    `hc wait <name>` (instead of `sleep`), `hc send <name> "<text>"` (answer or redirect it),
    `hc kill <name>`, `hc rm <name>` for a finished one.
-5. **Clean up** when the PR or comment is out: `hc rm <name>`, then
+5. **Clean up** when the PR or comment is out: `hc kill <name>`, then `hc rm <name>`
+   (a finished worker's session stays open and holds the worktree until killed), then
    `git worktree remove .claude/worktrees/<name>` (re-check `lsof` first, see the
    fork-manager skill).
 
