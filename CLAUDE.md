@@ -136,7 +136,8 @@ Run workers (coding sessions that explore, estimate or implement one task) as `h
    Workers start in auto mode: no permission prompts. Nothing wakes the starting session when
    a worker ends (the "note typed into the parent" `hc run --help` describes never showed up
    in the session's input). Right after starting the workers, run
-   `hc wait --children all` as a background Bash command (`run_in_background`); its exit
+   `hc wait --children all --timeout 3600` as a background Bash command (`run_in_background`); without
+   `--timeout` it exits after 180 s while the workers still run. Its exit
    re-invokes the session. Then read each result.
 4. **Manage**: `hc ls` (state and `working`/`done`), `hc read <name>` (its screen),
    `hc wait <name>` (instead of `sleep`), `hc send <name> "<text>"` (answer or redirect it),
